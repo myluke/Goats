@@ -189,6 +189,19 @@ watch(lastTurnResult, async (newResult) => {
   }
 }, { deep: true })
 
+// Auto-advance to next turn after animations complete
+watch(
+  [phase, isAnimating],
+  ([newPhase, animating]) => {
+    if (newPhase === 'moving' && !animating) {
+      // Brief delay for visual feedback, then advance
+      setTimeout(() => {
+        gameStore.nextTurn()
+      }, 800)
+    }
+  }
+)
+
 // Track which mountains will receive movement from current grouping
 const targetMountains = ref<Set<MountainId>>(new Set())
 
@@ -274,10 +287,6 @@ function handleModifyOnes(modifications: Map<number, number>) {
 
 function handleConfirmGroups(groups: number[][]) {
   gameStore.confirmGroups(groups)
-}
-
-function handleNextTurn() {
-  gameStore.nextTurn()
 }
 
 function handleNewGame() {
@@ -547,17 +556,6 @@ function handleNewGame() {
         @confirm-groups="handleConfirmGroups"
         @target-mountains-changed="handleTargetMountainsChanged"
       />
-
-      <!-- Next Turn Button -->
-      <div v-if="phase === 'moving'" class="text-center">
-        <button
-          class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-lg"
-          :disabled="isAnimating"
-          @click="handleNextTurn"
-        >
-          {{ isAnimating ? '动画中...' : '结束回合 →' }}
-        </button>
-      </div>
 
       <!-- Token Collection Animation Overlay -->
       <div

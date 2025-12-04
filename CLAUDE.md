@@ -1,4 +1,78 @@
-# Project Instructions
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## 工作原则
+
+### 基本规范
+
+- **语言要求**:使用简体中文回复用户问题
+- **代码质量**:我们的代码会被 Linus Review,要避免被他骂!
+- **高标准执行**:重视代码质量、安全性、可维护性
+- **如果有方案文档输出，就全部输出到./docs/ 目录下。**
+
+## Commands
+
+```bash
+npm run dev          # Start Vite dev server (http://localhost:5173)
+npm run build        # Type check (vue-tsc) + production build
+npx vue-tsc -b       # Type check only
+```
+
+## Architecture
+
+### State Flow
+```
+User Interactions (Components)
+    ↓
+Pinia Store (src/stores/game.ts)
+    ↓
+Pure Game Logic (src/lib/*.ts)
+    ↓
+Immutable State Updates → Components re-render
+```
+
+### Key Directories
+- **src/types/game.ts** - All TypeScript types (GameState, Player, Mountain, Die, GamePhase)
+- **src/stores/game.ts** - Pinia store: single source of truth, dispatches to lib functions
+- **src/lib/** - Pure game logic (no Vue dependencies):
+  - `gameState.ts` - Factory functions, score calculation
+  - `rules.ts` - Core rules engine (dice, movement, knockoffs, tokens)
+  - `turnFlow.ts` - Turn state machine (roll → group → move → end)
+  - `endGame.ts` - Win conditions, rankings, tiebreakers
+- **src/components/** - Vue components (UI only, dispatch actions to store)
+
+### Game Phases
+`'setup'` → `'rolling'` → `'grouping'` → `'moving'` → `'ended'`
+
+Phase controls valid actions via `getTurnState()` computed property.
+
+### Immutability Pattern
+All lib functions use `cloneGameState()` (JSON parse/stringify) and return new state rather than mutating. This enables Pinia reactivity.
+
+### Component Hierarchy
+```
+App.vue
+├── SetupScreen.vue (+ TutorialOverlay.vue)
+└── GameBoard.vue
+    ├── DiceArea.vue (dice rolling, grouping, ones modification)
+    └── RulesModal.vue
+```
+
+### Persistence
+- Auto-saves to localStorage with 500ms debounce
+- Key: `mountain-goats-save`
+- Tutorial completion: `mountain-goats-tutorial-completed`
+
+## Game Rules Quick Reference
+- 6 mountains numbered 5-10 (sum of dice group targets that mountain)
+- Mountain heights: 5→3 steps, 6→4, 7→5, 8→6, 9→7, 10→8
+- Multiple 1s rule: First 1 kept, others can change to any value (1-6)
+- Reaching summit: collect token, knock off any opponent there
+- Bonus token: awarded when player has ≥1 token from all 6 mountains
+- End game triggers: all bonus tokens claimed OR 3+ mountains empty
+
+---
 
 ## Long-Task Harness
 

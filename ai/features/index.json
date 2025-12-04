@@ -115,6 +115,66 @@
       "priority": 18,
       "module": "ui",
       "description": "First-time player tutorial/demo mode"
+    },
+    "i18n.setup": {
+      "status": "failing",
+      "priority": 21,
+      "module": "i18n",
+      "description": "安装 vue-i18n 并创建 i18n 配置"
+    },
+    "i18n.locales-zh": {
+      "status": "failing",
+      "priority": 22,
+      "module": "i18n",
+      "description": "创建中文翻译文件"
+    },
+    "i18n.locales-en": {
+      "status": "failing",
+      "priority": 23,
+      "module": "i18n",
+      "description": "创建英文翻译文件"
+    },
+    "i18n.component-setup": {
+      "status": "failing",
+      "priority": 24,
+      "module": "i18n",
+      "description": "国际化 SetupScreen 组件"
+    },
+    "i18n.component-gameboard": {
+      "status": "failing",
+      "priority": 25,
+      "module": "i18n",
+      "description": "国际化 GameBoard 组件"
+    },
+    "i18n.component-dicearea": {
+      "status": "failing",
+      "priority": 26,
+      "module": "i18n",
+      "description": "国际化 DiceArea 组件"
+    },
+    "i18n.component-rules": {
+      "status": "failing",
+      "priority": 27,
+      "module": "i18n",
+      "description": "国际化 RulesModal 组件"
+    },
+    "i18n.component-tutorial": {
+      "status": "failing",
+      "priority": 28,
+      "module": "i18n",
+      "description": "国际化 TutorialOverlay 组件"
+    },
+    "i18n.component-app": {
+      "status": "failing",
+      "priority": 29,
+      "module": "i18n",
+      "description": "国际化 App.vue 组件"
+    },
+    "i18n.language-switcher": {
+      "status": "failing",
+      "priority": 30,
+      "module": "i18n",
+      "description": "添加语言切换功能"
     }
   }
 }
