@@ -2,7 +2,7 @@
 id: i18n.component-tutorial
 module: i18n
 priority: 28
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
