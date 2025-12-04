@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T16:03:19.669Z",
+  "updatedAt": "2025-12-04T16:03:26.780Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -87,7 +87,7 @@
       "description": "Drag/click dice grouping with real-time sum display"
     },
     "ui.end-game-screen": {
-      "status": "failing",
+      "status": "passing",
       "priority": 14,
       "module": "ui",
       "description": "End game results screen with scores, rankings, and replay button"
