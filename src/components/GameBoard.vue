@@ -188,6 +188,17 @@ watch(lastTurnResult, async (newResult) => {
   }
 }, { deep: true })
 
+// Track which mountains will receive movement from current grouping
+const targetMountains = ref<Set<MountainId>>(new Set())
+
+function handleTargetMountainsChanged(mountainIds: MountainId[]) {
+  targetMountains.value = new Set(mountainIds)
+}
+
+function isTargetMountain(mountainId: MountainId): boolean {
+  return targetMountains.value.has(mountainId)
+}
+
 const mountainColors: Record<MountainId, string> = {
   5: 'from-amber-700 to-amber-500',
   6: 'from-orange-700 to-orange-500',
@@ -361,7 +372,7 @@ function handleNewGame() {
           class="flex flex-col items-center"
         >
           <!-- Mountain Number & Token Count -->
-          <div class="text-center mb-2">
+          <div class="text-center mb-2 relative">
             <div class="text-2xl font-bold text-gray-800">{{ mountainId }}</div>
             <div
               :class="[
@@ -371,13 +382,21 @@ function handleNewGame() {
             >
               剩余 {{ state.mountains[mountainId].tokenPile.length }} 枚
             </div>
+            <!-- +1 indicator when this mountain will receive movement -->
+            <div
+              v-if="isTargetMountain(mountainId) && phase === 'grouping'"
+              class="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full animate-bounce"
+            >
+              +1
+            </div>
           </div>
 
           <!-- Mountain Path -->
           <div
             :class="[
-              'rounded-t-3xl bg-gradient-to-t p-2 w-20',
-              mountainColors[mountainId]
+              'rounded-t-3xl bg-gradient-to-t p-2 w-20 transition-all',
+              mountainColors[mountainId],
+              isTargetMountain(mountainId) && phase === 'grouping' ? 'ring-4 ring-green-400 ring-offset-2' : ''
             ]"
           >
             <div class="flex flex-col gap-1">
@@ -457,6 +476,7 @@ function handleNewGame() {
         @roll="handleRoll"
         @modify-ones="handleModifyOnes"
         @confirm-groups="handleConfirmGroups"
+        @target-mountains-changed="handleTargetMountainsChanged"
       />
 
       <!-- Next Turn Button -->

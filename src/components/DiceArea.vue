@@ -18,6 +18,7 @@ const emit = defineEmits<{
   roll: []
   modifyOnes: [modifications: Map<number, number>]
   confirmGroups: [groups: number[][]]
+  targetMountainsChanged: [mountainIds: MountainId[]]
 }>()
 
 // Local grouping state
@@ -110,6 +111,18 @@ const allDiceGrouped = computed(() => {
 const hasValidMoves = computed(() => {
   return groupSums.value.some((g) => g.isValid)
 })
+
+// Get target mountain IDs from valid groups
+const targetMountainIds = computed(() => {
+  return groupSums.value
+    .filter(g => g.isValid && g.mountainId)
+    .map(g => g.mountainId as MountainId)
+})
+
+// Watch for target mountain changes and emit
+watch(targetMountainIds, (newIds) => {
+  emit('targetMountainsChanged', newIds)
+}, { deep: true })
 
 // Dice rolling animation
 async function animateDiceRoll(): Promise<void> {
@@ -387,31 +400,94 @@ const groupColors = [
       </div>
     </div>
 
-    <!-- Groups Display -->
-    <div v-if="groups.length > 0" class="mb-4">
-      <div class="text-sm text-gray-600 mb-2">已创建的分组:</div>
-      <div class="flex gap-2 flex-wrap justify-center">
+    <!-- Groups Display with Mountain Targets -->
+    <div v-if="phase === 'grouping' && !showOneModifier" class="mb-4">
+      <div class="text-sm text-gray-600 mb-2">
+        {{ groups.length > 0 ? '已创建的分组:' : '点击骰子选中后创建分组 (和为5-10可移动山羊)' }}
+      </div>
+
+      <!-- Group slots visualization -->
+      <div class="flex gap-3 flex-wrap justify-center">
         <div
           v-for="(group, gIndex) in groupSums"
           :key="gIndex"
           :class="[
-            'px-3 py-1 rounded-full text-sm flex items-center gap-2',
-            group.isValid ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+            'relative p-3 rounded-lg border-2 transition-all min-w-[100px]',
+            group.isValid
+              ? 'bg-green-50 border-green-400 shadow-md'
+              : 'bg-gray-50 border-gray-300'
           ]"
         >
-          <span>
-            {{ group.indices.map(i => localDice[i]?.value).join('+') }} = {{ group.sum }}
-          </span>
-          <span v-if="group.mountainId" class="font-bold">
-            → {{ group.mountainId }}号山
-          </span>
+          <!-- Group number badge -->
+          <div
+            :class="[
+              'absolute -top-2 -left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+              group.isValid ? 'bg-green-500 text-white' : 'bg-gray-400 text-white'
+            ]"
+          >
+            {{ gIndex + 1 }}
+          </div>
+
+          <!-- Dice in group -->
+          <div class="flex gap-1 justify-center mb-2">
+            <div
+              v-for="(dieIndex, i) in group.indices"
+              :key="dieIndex"
+              class="w-8 h-8 rounded bg-white border border-gray-300 flex items-center justify-center font-bold"
+            >
+              {{ localDice[dieIndex]?.value }}
+              <span v-if="i < group.indices.length - 1" class="ml-1 text-gray-400 text-xs">+</span>
+            </div>
+          </div>
+
+          <!-- Sum and target mountain -->
+          <div class="text-center">
+            <div :class="['text-lg font-bold', group.isValid ? 'text-green-700' : 'text-gray-500']">
+              = {{ group.sum }}
+            </div>
+            <div v-if="group.mountainId" class="text-xs text-green-600 font-medium mt-1 flex items-center justify-center gap-1">
+              <span>🏔️</span>
+              <span>{{ group.mountainId }}号山</span>
+              <span class="bg-green-500 text-white px-1 rounded text-xs">+1</span>
+            </div>
+            <div v-else class="text-xs text-gray-400 mt-1">
+              无效目标
+            </div>
+          </div>
+
+          <!-- Remove button -->
           <button
-            class="ml-1 text-gray-400 hover:text-red-500"
+            class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
             @click="handleRemoveGroup(gIndex)"
+            title="删除分组"
           >
             ✕
           </button>
         </div>
+
+        <!-- Empty slot hint when no groups -->
+        <div
+          v-if="groups.length === 0 && selectedDice.size > 0"
+          class="p-3 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 min-w-[100px] flex items-center justify-center"
+        >
+          <div class="text-center text-blue-500 text-sm">
+            <div>选中 {{ selectedDice.size }} 个</div>
+            <div class="text-xs">点击"创建分组"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary of target mountains -->
+      <div v-if="targetMountainIds.length > 0" class="mt-3 text-center">
+        <span class="text-sm text-gray-600">将移动: </span>
+        <span
+          v-for="(mountainId, index) in targetMountainIds"
+          :key="mountainId"
+          class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-sm mx-1"
+        >
+          🏔️ {{ mountainId }}号山
+          <span v-if="index < targetMountainIds.length - 1">, </span>
+        </span>
       </div>
     </div>
 
