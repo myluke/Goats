@@ -1,6 +1,16 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { GameState, Player, GamePhase } from '@/types/game'
+import type { GameState, Player, GamePhase, PlayerColor } from '@/types/game'
+import {
+  createPlayer,
+  createInitialGameState,
+  calculatePlayerScore,
+} from '@/lib/gameState'
+
+export interface PlayerSetup {
+  name: string
+  color: PlayerColor
+}
 
 export const useGameStore = defineStore('game', () => {
   const state = ref<GameState | null>(null)
@@ -18,8 +28,19 @@ export const useGameStore = defineStore('game', () => {
     return state.value?.phase === 'ended'
   })
 
-  function initGame(_players: Player[]) {
-    // Will be implemented in core.game-state feature
+  const playerScores = computed(() => {
+    if (!state.value) return []
+    return state.value.players.map((player) => ({
+      player,
+      score: calculatePlayerScore(player),
+    }))
+  })
+
+  function initGame(playerSetups: PlayerSetup[]) {
+    const players = playerSetups.map((setup, index) =>
+      createPlayer(`player-${index}`, setup.name, setup.color)
+    )
+    state.value = createInitialGameState(players)
   }
 
   function rollDice() {
@@ -34,14 +55,20 @@ export const useGameStore = defineStore('game', () => {
     // Will be implemented in core.turn-flow feature
   }
 
+  function resetGame() {
+    state.value = null
+  }
+
   return {
     state,
     currentPlayer,
     phase,
     isGameOver,
+    playerScores,
     initGame,
     rollDice,
     confirmGroups,
     nextTurn,
+    resetGame,
   }
 })
