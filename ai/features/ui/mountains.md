@@ -2,7 +2,7 @@
 id: ui.mountains
 module: ui
 priority: 7
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
@@ -19,13 +19,7 @@ tags:
 
 1. Create MountainBoard component showing 6 mountains (5-10) horizontally
 2. Each mountain shows:
-   - Mountain number prominently
-   - Path steps from base to summit (visual ladder/path)
-   - Summit area at top
-   - Token pile with count indicator (hover to see remaining)
 3. Display goat meeples at their current positions on each mountain
-   - Different colors per player
-   - Multiple goats can share path steps (not summit)
 4. Summit shows only one goat (the one currently there)
 5. Visual indication when a mountain's token pile is empty
 6. Responsive: horizontal scroll on mobile

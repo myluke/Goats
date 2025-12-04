@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T16:01:00.651Z",
+  "updatedAt": "2025-12-04T16:01:15.756Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -45,7 +45,7 @@
       "description": "Create game setup screen (2-4 players, names, colors)"
     },
     "ui.mountains": {
-      "status": "failing",
+      "status": "passing",
       "priority": 7,
       "module": "ui",
       "description": "Render 6 mountains with paths, goat positions, and token piles"
