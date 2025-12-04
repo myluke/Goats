@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { PlayerColor } from '@/types/game'
 import { PLAYER_COLORS } from '@/types/game'
 import TutorialOverlay from './TutorialOverlay.vue'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 
 const { t } = useI18n()
 
@@ -112,12 +113,15 @@ function handleStartGame() {
         <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
           🐐 Mountain Goats
         </h1>
-        <button
-          class="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-1"
-          @click="openTutorial"
-        >
-          📖 {{ t('setup.learnGame') }}
-        </button>
+        <div class="flex items-center gap-2">
+          <LanguageSwitcher />
+          <button
+            class="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-1"
+            @click="openTutorial"
+          >
+            📖 {{ t('setup.learnGame') }}
+          </button>
+        </div>
       </div>
     </header>
 

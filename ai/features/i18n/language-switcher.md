@@ -2,7 +2,7 @@
 id: i18n.language-switcher
 module: i18n
 priority: 30
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:

@@ -6,6 +6,7 @@ import { MOUNTAIN_IDS, MOUNTAIN_PATH_LENGTHS } from '@/types/game'
 import type { MountainId, PlayerColor, Player } from '@/types/game'
 import DiceArea from './DiceArea.vue'
 import RulesModal from './RulesModal.vue'
+import LanguageSwitcher from './LanguageSwitcher.vue'
 
 const { t } = useI18n()
 const gameStore = useGameStore()
@@ -360,6 +361,8 @@ function handleNewGame() {
           </div>
 
           <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Language Switcher -->
+            <LanguageSwitcher />
             <!-- Skip Animations Toggle - hidden on very small screens -->
             <button
               class="hidden sm:flex text-xs px-2 py-1 rounded transition-colors items-center"
