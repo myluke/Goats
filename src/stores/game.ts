@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { GameState, Player, GamePhase, PlayerColor, MountainId } from '@/types/game'
 import {
   createPlayer,
@@ -25,6 +25,14 @@ import {
 export interface PlayerSetup {
   name: string
   color: PlayerColor
+}
+
+const STORAGE_KEY = 'mountain-goats-save'
+
+interface SavedGameData {
+  state: GameState
+  version: number
+  savedAt: string
 }
 
 export const useGameStore = defineStore('game', () => {
@@ -118,7 +126,97 @@ export const useGameStore = defineStore('game', () => {
     state.value = null
     lastTurnResult.value = null
     gameResults.value = null
+    clearSavedGame()
   }
+
+  // LocalStorage persistence functions
+  function saveGame(): boolean {
+    if (!state.value) return false
+    try {
+      const saveData: SavedGameData = {
+        state: state.value,
+        version: 1,
+        savedAt: new Date().toISOString(),
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(saveData))
+      return true
+    } catch (error) {
+      console.error('Failed to save game:', error)
+      return false
+    }
+  }
+
+  function loadSavedGame(): SavedGameData | null {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY)
+      if (!saved) return null
+
+      const data = JSON.parse(saved) as SavedGameData
+      // Validate the structure
+      if (!data.state || !data.version || !data.savedAt) {
+        console.warn('Invalid save data structure')
+        return null
+      }
+      return data
+    } catch (error) {
+      console.error('Failed to load saved game:', error)
+      return null
+    }
+  }
+
+  function hasSavedGame(): boolean {
+    return loadSavedGame() !== null
+  }
+
+  function restoreSavedGame(): boolean {
+    const savedData = loadSavedGame()
+    if (!savedData) return false
+
+    try {
+      state.value = savedData.state
+      lastTurnResult.value = null
+      gameResults.value = null
+
+      // Recalculate game results if game was ended
+      if (state.value.phase === 'ended') {
+        gameResults.value = getGameResults(state.value)
+      }
+      return true
+    } catch (error) {
+      console.error('Failed to restore saved game:', error)
+      return false
+    }
+  }
+
+  function clearSavedGame() {
+    localStorage.removeItem(STORAGE_KEY)
+  }
+
+  function getSavedGameInfo(): { playerCount: number; turnCount: number; savedAt: string } | null {
+    const savedData = loadSavedGame()
+    if (!savedData) return null
+    return {
+      playerCount: savedData.state.players.length,
+      turnCount: savedData.state.turnCount,
+      savedAt: savedData.savedAt,
+    }
+  }
+
+  // Auto-save after state changes (with debounce)
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null
+  watch(
+    state,
+    () => {
+      if (!state.value || state.value.phase === 'setup') return
+
+      // Debounce saves
+      if (saveTimeout) clearTimeout(saveTimeout)
+      saveTimeout = setTimeout(() => {
+        saveGame()
+      }, 500)
+    },
+    { deep: true }
+  )
 
   return {
     state,
@@ -135,5 +233,12 @@ export const useGameStore = defineStore('game', () => {
     confirmGroups,
     nextTurn,
     resetGame,
+    // Persistence
+    saveGame,
+    loadSavedGame,
+    hasSavedGame,
+    restoreSavedGame,
+    clearSavedGame,
+    getSavedGameInfo,
   }
 })

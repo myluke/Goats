@@ -199,6 +199,26 @@ function isTargetMountain(mountainId: MountainId): boolean {
   return targetMountains.value.has(mountainId)
 }
 
+// Game menu state
+const showGameMenu = ref(false)
+
+function toggleGameMenu() {
+  showGameMenu.value = !showGameMenu.value
+}
+
+function handleSaveAndQuit() {
+  gameStore.saveGame()
+  gameStore.resetGame()
+  showGameMenu.value = false
+}
+
+function handleClearSave() {
+  if (confirm('确定要删除存档吗?')) {
+    gameStore.clearSavedGame()
+    showGameMenu.value = false
+  }
+}
+
 const mountainColors: Record<MountainId, string> = {
   5: 'from-amber-700 to-amber-500',
   6: 'from-orange-700 to-orange-500',
@@ -266,9 +286,39 @@ function handleNewGame() {
     <!-- Header -->
     <header class="bg-white/80 backdrop-blur-sm shadow-sm py-3">
       <div class="container mx-auto px-4 flex items-center justify-between">
-        <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-          🐐 Mountain Goats
-        </h1>
+        <div class="flex items-center gap-2">
+          <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+            🐐 Mountain Goats
+          </h1>
+          <!-- Game Menu Button -->
+          <div class="relative">
+            <button
+              class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+              @click="toggleGameMenu"
+              title="游戏菜单"
+            >
+              ☰
+            </button>
+            <!-- Dropdown Menu -->
+            <div
+              v-if="showGameMenu"
+              class="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[140px]"
+            >
+              <button
+                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                @click="handleSaveAndQuit"
+              >
+                💾 保存退出
+              </button>
+              <button
+                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
+                @click="handleClearSave"
+              >
+                🗑️ 删除存档
+              </button>
+            </div>
+          </div>
+        </div>
         <div class="flex items-center gap-4">
           <!-- Skip Animations Toggle -->
           <button
