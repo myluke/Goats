@@ -4,53 +4,62 @@
     "hasTests": false,
     "testCommand": "",
     "testFramework": "",
-    "hasTypeCheck": false,
-    "typeCheckCommand": "",
+    "hasTypeCheck": true,
+    "typeCheckCommand": "npx vue-tsc -b",
     "hasLint": false,
     "lintCommand": "",
-    "hasBuild": false,
-    "buildCommand": "",
+    "hasBuild": true,
+    "buildCommand": "npm run build",
     "hasGit": true,
     "source": "ai-discovered",
-    "confidence": 0.5,
+    "confidence": 0.41400000000000003,
     "languages": [
-      "markdown"
+      "TypeScript",
+      "Vue",
+      "Vite"
     ],
-    "detectedAt": "2025-12-04T15:40:05.913Z",
+    "detectedAt": "2025-12-04T16:08:22.425Z",
     "testInfo": {
       "available": false,
       "command": "",
       "framework": "",
-      "confidence": 0,
+      "confidence": 0.1,
       "selectiveFileTemplate": "",
       "selectiveNameTemplate": "",
-      "packageManager": "none"
+      "packageManager": "npm"
     },
     "e2eInfo": {
       "available": false,
       "command": "",
       "framework": "",
-      "confidence": 0,
+      "confidence": 0.1,
       "configFile": "",
       "grepTemplate": "",
       "fileTemplate": ""
     },
     "typeCheckInfo": {
-      "available": false,
-      "command": "",
-      "confidence": 0
+      "available": true,
+      "command": "npx vue-tsc -b",
+      "confidence": 0.82
     },
     "lintInfo": {
       "available": false,
       "command": "",
-      "confidence": 0
+      "confidence": 0.1
     },
     "buildInfo": {
-      "available": false,
-      "command": "",
-      "confidence": 0
+      "available": true,
+      "command": "npm run build",
+      "confidence": 0.95
     }
   },
-  "commitHash": "0684e2ecc1e5cf19425a5ee3453dbb5e371f7f5a",
-  "trackedFiles": []
+  "commitHash": "8d92a23a854082d9ac33100d683abb039f3e1819",
+  "trackedFiles": [
+    "package.json",
+    "package-lock.json",
+    "tsconfig.json",
+    "tsconfig.app.json",
+    "tsconfig.node.json",
+    "vite.config.ts"
+  ]
 }

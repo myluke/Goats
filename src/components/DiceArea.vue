@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import type { Die, MountainId } from '@/types/game'
 import {
   calculateGroupSum,
@@ -27,18 +27,32 @@ const groups = ref<number[][]>([])
 const showOneModifier = ref(false)
 const oneModifications = ref<Map<number, number>>(new Map())
 
+// Animation state
+const isRolling = ref(false)
+const rollingValues = ref<number[]>([0, 0, 0, 0])
+const diceAnimationClasses = ref<string[]>(['', '', '', ''])
+
+// Sound mute state (stored in localStorage)
+const isMuted = ref(localStorage.getItem('diceSoundMuted') === 'true')
+
+function toggleMute() {
+  isMuted.value = !isMuted.value
+  localStorage.setItem('diceSoundMuted', String(isMuted.value))
+}
+
 // Sync local dice with props
-import { watch } from 'vue'
 watch(
   () => props.dice,
   (newDice) => {
-    localDice.value = newDice.map((d) => ({ ...d }))
-    // Check for multiple ones
-    const modifiableOnes = findModifiableOnes(newDice)
-    if (modifiableOnes.length > 0 && !newDice.some((d) => d.isModified)) {
-      showOneModifier.value = true
-    } else {
-      showOneModifier.value = false
+    if (!isRolling.value) {
+      localDice.value = newDice.map((d) => ({ ...d }))
+      // Check for multiple ones
+      const modifiableOnes = findModifiableOnes(newDice)
+      if (modifiableOnes.length > 0 && !newDice.some((d) => d.isModified)) {
+        showOneModifier.value = true
+      } else {
+        showOneModifier.value = false
+      }
     }
   },
   { deep: true, immediate: true }
@@ -67,14 +81,75 @@ const hasValidMoves = computed(() => {
   return groupSums.value.some((g) => g.isValid)
 })
 
-function handleRoll() {
+// Dice rolling animation
+async function animateDiceRoll(): Promise<void> {
+  isRolling.value = true
+
+  // Play sound if not muted
+  if (!isMuted.value) {
+    playDiceSound()
+  }
+
+  // Generate random animation directions for each die
+  const directions = ['rotate-x', 'rotate-y', 'rotate-xy', 'rotate-yx']
+  diceAnimationClasses.value = Array.from({ length: 4 }, () =>
+    directions[Math.floor(Math.random() * directions.length)]!
+  )
+
+  // Animate for ~1 second with random interim values
+  const duration = 1000
+  const intervalTime = 80
+  const iterations = Math.floor(duration / intervalTime)
+
+  for (let i = 0; i < iterations; i++) {
+    rollingValues.value = Array.from({ length: 4 }, () =>
+      Math.floor(Math.random() * 6) + 1
+    )
+    await new Promise(resolve => setTimeout(resolve, intervalTime))
+  }
+
+  // Clear animation classes
+  diceAnimationClasses.value = ['', '', '', '']
+  isRolling.value = false
+}
+
+function playDiceSound() {
+  // Create a simple click sound using Web Audio API
+  try {
+    const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.frequency.value = 200
+    oscillator.type = 'square'
+    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime)
+    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1)
+
+    oscillator.start(audioContext.currentTime)
+    oscillator.stop(audioContext.currentTime + 0.1)
+  } catch {
+    // Audio not supported, silently fail
+  }
+}
+
+async function handleRoll() {
+  if (isRolling.value) return // Prevent double clicks
+
   groups.value = []
   selectedDice.value.clear()
+
+  // Start animation
+  await animateDiceRoll()
+
+  // Emit roll event after animation
   emit('roll')
 }
 
 function handleDieClick(index: number) {
-  if (props.phase !== 'grouping' || showOneModifier.value) return
+  if (props.phase !== 'grouping' || showOneModifier.value || isRolling.value) return
 
   if (selectedDice.value.has(index)) {
     selectedDice.value.delete(index)
@@ -130,6 +205,15 @@ function getDieGroupIndex(dieIndex: number): number | null {
   return null
 }
 
+// Get display value for die (animated or actual)
+function getDieDisplayValue(index: number): string | number {
+  if (isRolling.value) {
+    return rollingValues.value[index] ?? '?'
+  }
+  const die = localDice.value[index]
+  return die?.value || '?'
+}
+
 const groupColors = [
   'ring-blue-500 bg-blue-50',
   'ring-green-500 bg-green-50',
@@ -141,8 +225,16 @@ const groupColors = [
 <template>
   <div class="bg-white rounded-xl shadow-lg p-4">
     <!-- Phase Indicator -->
-    <div class="text-center text-sm text-gray-500 mb-3">
-      {{ phase === 'rolling' ? '点击掷骰开始回合' : phase === 'grouping' ? '选择骰子组成小组' : '移动山羊中...' }}
+    <div class="text-center text-sm text-gray-500 mb-3 flex items-center justify-center gap-2">
+      <span>{{ phase === 'rolling' ? '点击掷骰开始回合' : phase === 'grouping' ? '选择骰子组成小组' : '移动山羊中...' }}</span>
+      <!-- Mute Button -->
+      <button
+        class="text-gray-400 hover:text-gray-600 transition-colors"
+        :title="isMuted ? '开启声音' : '静音'"
+        @click="toggleMute"
+      >
+        {{ isMuted ? '🔇' : '🔊' }}
+      </button>
     </div>
 
     <!-- Multiple Ones Modifier -->
@@ -180,17 +272,19 @@ const groupColors = [
         v-for="(die, index) in localDice"
         :key="die.id"
         :class="[
-          'w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-bold transition-all border-2',
-          die.value === 0 ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white shadow-md',
+          'dice-button w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-bold transition-all border-2',
+          die.value === 0 && !isRolling ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white shadow-md',
           selectedDice.has(index) ? 'ring-4 ring-green-500 scale-110' : '',
           getDieGroupIndex(index) !== null ? groupColors[getDieGroupIndex(index)! % groupColors.length] + ' ring-2' : 'border-gray-300',
           die.isModified ? 'border-yellow-400' : '',
-          phase === 'grouping' && !showOneModifier ? 'cursor-pointer hover:scale-105' : 'cursor-default'
+          phase === 'grouping' && !showOneModifier && !isRolling ? 'cursor-pointer hover:scale-105' : 'cursor-default',
+          isRolling ? diceAnimationClasses[index] : ''
         ]"
-        :disabled="phase !== 'grouping' || showOneModifier"
+        :disabled="phase !== 'grouping' || showOneModifier || isRolling"
+        :style="isRolling ? { willChange: 'transform' } : {}"
         @click="handleDieClick(index)"
       >
-        {{ die.value || '?' }}
+        {{ getDieDisplayValue(index) }}
       </button>
     </div>
 
@@ -226,16 +320,16 @@ const groupColors = [
     <div class="flex gap-2 justify-center">
       <button
         v-if="phase === 'rolling'"
-        :disabled="!canRoll"
+        :disabled="!canRoll || isRolling"
         :class="[
           'px-6 py-3 rounded-lg font-medium transition-all',
-          canRoll
+          canRoll && !isRolling
             ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
         ]"
         @click="handleRoll"
       >
-        🎲 掷骰子
+        {{ isRolling ? '🎲 掷骰中...' : '🎲 掷骰子' }}
       </button>
 
       <template v-if="phase === 'grouping' && !showOneModifier">
@@ -281,3 +375,54 @@ const groupColors = [
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Dice rolling animations */
+@keyframes dice-rotate-x {
+  0% { transform: rotateX(0deg) scale(1); }
+  25% { transform: rotateX(90deg) scale(1.1); }
+  50% { transform: rotateX(180deg) scale(1); }
+  75% { transform: rotateX(270deg) scale(1.1); }
+  100% { transform: rotateX(360deg) scale(1); }
+}
+
+@keyframes dice-rotate-y {
+  0% { transform: rotateY(0deg) scale(1); }
+  25% { transform: rotateY(90deg) scale(1.1); }
+  50% { transform: rotateY(180deg) scale(1); }
+  75% { transform: rotateY(270deg) scale(1.1); }
+  100% { transform: rotateY(360deg) scale(1); }
+}
+
+@keyframes dice-rotate-xy {
+  0% { transform: rotateX(0deg) rotateY(0deg) scale(1); }
+  25% { transform: rotateX(90deg) rotateY(45deg) scale(1.15); }
+  50% { transform: rotateX(180deg) rotateY(90deg) scale(1); }
+  75% { transform: rotateX(270deg) rotateY(135deg) scale(1.15); }
+  100% { transform: rotateX(360deg) rotateY(180deg) scale(1); }
+}
+
+@keyframes dice-rotate-yx {
+  0% { transform: rotateY(0deg) rotateX(0deg) scale(1); }
+  25% { transform: rotateY(90deg) rotateX(45deg) scale(1.15); }
+  50% { transform: rotateY(180deg) rotateX(90deg) scale(1); }
+  75% { transform: rotateY(270deg) rotateX(135deg) scale(1.15); }
+  100% { transform: rotateY(360deg) rotateX(180deg) scale(1); }
+}
+
+.dice-button.rotate-x {
+  animation: dice-rotate-x 0.3s ease-in-out infinite;
+}
+
+.dice-button.rotate-y {
+  animation: dice-rotate-y 0.3s ease-in-out infinite;
+}
+
+.dice-button.rotate-xy {
+  animation: dice-rotate-xy 0.4s ease-in-out infinite;
+}
+
+.dice-button.rotate-yx {
+  animation: dice-rotate-yx 0.4s ease-in-out infinite;
+}
+</style>

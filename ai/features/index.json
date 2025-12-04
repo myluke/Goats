@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T16:03:26.780Z",
+  "updatedAt": "2025-12-04T16:11:11.630Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -63,7 +63,7 @@
       "description": "Display player list with scores, tokens, and current turn indicator"
     },
     "ui.dice-roll-animation": {
-      "status": "failing",
+      "status": "passing",
       "priority": 10,
       "module": "ui",
       "description": "Add dice rolling animation and result display"
