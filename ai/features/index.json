@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T16:11:11.630Z",
+  "updatedAt": "2025-12-04T16:14:13.334Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -69,7 +69,7 @@
       "description": "Add dice rolling animation and result display"
     },
     "ui.goat-movement": {
-      "status": "failing",
+      "status": "passing",
       "priority": 11,
       "module": "ui",
       "description": "Animate goat movement and knockoff effects"

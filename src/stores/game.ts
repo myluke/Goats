@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import type { GameState, Player, GamePhase, PlayerColor } from '@/types/game'
+import type { GameState, Player, GamePhase, PlayerColor, MountainId } from '@/types/game'
 import {
   createPlayer,
   createInitialGameState,
@@ -31,7 +31,7 @@ export const useGameStore = defineStore('game', () => {
   const state = ref<GameState | null>(null)
   const lastTurnResult = ref<{
     moves: Array<{
-      mountainId: number
+      mountainId: MountainId
       tokenCollected: number | null
       knockedOff: string | null
     }>

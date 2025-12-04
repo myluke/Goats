@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { useGameStore } from '@/stores/game'
 import { MOUNTAIN_IDS, MOUNTAIN_PATH_LENGTHS } from '@/types/game'
-import type { MountainId, PlayerColor } from '@/types/game'
+import type { MountainId, PlayerColor, Player } from '@/types/game'
 import DiceArea from './DiceArea.vue'
 
 const gameStore = useGameStore()
 
-const emit = defineEmits<{
+const _emit = defineEmits<{
   endGame: []
 }>()
 
@@ -18,6 +18,175 @@ const turnState = computed(() => gameStore.turnState)
 const lastTurnResult = computed(() => gameStore.lastTurnResult)
 const isGameOver = computed(() => gameStore.isGameOver)
 const gameResults = computed(() => gameStore.gameResults)
+
+// Animation state
+const skipAnimations = ref(localStorage.getItem('skipAnimations') === 'true')
+const isAnimating = ref(false)
+const animatingGoats = ref<Map<string, { mountainId: MountainId; fromPos: number; toPos: number; progress: number }>>(new Map())
+const knockoffAnimations = ref<Map<string, { mountainId: MountainId; fromPos: number }>>(new Map())
+const tokenAnimations = ref<{ mountainId: MountainId; value: number; playerId: string }[]>([])
+const scoreAnimations = ref<Map<string, { delta: number; show: boolean }>>(new Map())
+
+// Toggle skip animations
+function toggleSkipAnimations() {
+  skipAnimations.value = !skipAnimations.value
+  localStorage.setItem('skipAnimations', String(skipAnimations.value))
+}
+
+// Get animated position for a goat
+function getAnimatedPosition(player: Player, mountainId: MountainId): number {
+  const key = `${player.id}-${mountainId}`
+  const anim = animatingGoats.value.get(key)
+  if (anim && anim.mountainId === mountainId) {
+    // Interpolate between positions
+    return Math.round(anim.fromPos + (anim.toPos - anim.fromPos) * anim.progress)
+  }
+  return player.goatPositions[mountainId]
+}
+
+// Check if a goat is being knocked off
+function isBeingKnockedOff(player: Player, mountainId: MountainId): boolean {
+  const key = `${player.id}-${mountainId}`
+  return knockoffAnimations.value.has(key)
+}
+
+// Animate a single move
+async function animateMove(
+  playerId: string,
+  mountainId: MountainId,
+  fromPos: number,
+  toPos: number,
+  knockedOffPlayer?: string,
+  tokenCollected?: number
+): Promise<void> {
+  if (skipAnimations.value) return
+
+  const key = `${playerId}-${mountainId}`
+  const steps = Math.abs(toPos - fromPos)
+  const duration = 300 * steps // 300ms per step
+  const startTime = Date.now()
+
+  // Step-by-step animation
+  return new Promise((resolve) => {
+    function animate() {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+
+      animatingGoats.value.set(key, {
+        mountainId,
+        fromPos,
+        toPos,
+        progress
+      })
+      animatingGoats.value = new Map(animatingGoats.value) // Trigger reactivity
+
+      if (progress < 1) {
+        requestAnimationFrame(animate)
+      } else {
+        animatingGoats.value.delete(key)
+        animatingGoats.value = new Map(animatingGoats.value)
+
+        // Trigger knockoff animation
+        if (knockedOffPlayer) {
+          animateKnockoff(knockedOffPlayer, mountainId, toPos)
+        }
+
+        // Trigger token collection animation
+        if (tokenCollected !== undefined) {
+          animateTokenCollection(mountainId, tokenCollected, playerId)
+        }
+
+        resolve()
+      }
+    }
+    requestAnimationFrame(animate)
+  })
+}
+
+// Animate knockoff
+async function animateKnockoff(playerId: string, mountainId: MountainId, fromPos: number): Promise<void> {
+  if (skipAnimations.value) return
+
+  const key = `${playerId}-${mountainId}`
+  knockoffAnimations.value.set(key, { mountainId, fromPos })
+  knockoffAnimations.value = new Map(knockoffAnimations.value)
+
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  knockoffAnimations.value.delete(key)
+  knockoffAnimations.value = new Map(knockoffAnimations.value)
+}
+
+// Animate token collection
+async function animateTokenCollection(mountainId: MountainId, value: number, playerId: string): Promise<void> {
+  if (skipAnimations.value) return
+
+  tokenAnimations.value.push({ mountainId, value, playerId })
+  tokenAnimations.value = [...tokenAnimations.value]
+
+  // Show score increment
+  const existing = scoreAnimations.value.get(playerId)
+  scoreAnimations.value.set(playerId, {
+    delta: (existing?.delta ?? 0) + value,
+    show: true
+  })
+  scoreAnimations.value = new Map(scoreAnimations.value)
+
+  await new Promise(resolve => setTimeout(resolve, 600))
+
+  tokenAnimations.value = tokenAnimations.value.filter(t =>
+    !(t.mountainId === mountainId && t.value === value && t.playerId === playerId)
+  )
+
+  // Clear score animation after a delay
+  setTimeout(() => {
+    scoreAnimations.value.delete(playerId)
+    scoreAnimations.value = new Map(scoreAnimations.value)
+  }, 1000)
+}
+
+// Process turn results with animations
+async function processTurnAnimations(): Promise<void> {
+  if (!lastTurnResult.value || lastTurnResult.value.moves.length === 0) return
+  if (skipAnimations.value) return
+
+  isAnimating.value = true
+
+  const playerId = currentPlayer.value?.id
+  if (!playerId) {
+    isAnimating.value = false
+    return
+  }
+
+  // Sequential animations for each move
+  for (const move of lastTurnResult.value.moves) {
+    // Find current position before move (we need to calculate this)
+    const player = state.value?.players.find(p => p.id === playerId)
+    if (!player) continue
+
+    const currentPos = player.goatPositions[move.mountainId]
+    const fromPos = currentPos > 0 ? currentPos - 1 : 0 // Estimate: moved up by 1
+
+    await animateMove(
+      playerId,
+      move.mountainId,
+      fromPos,
+      currentPos,
+      move.knockedOff ? state.value?.players.find(p => p.name === move.knockedOff)?.id : undefined,
+      move.tokenCollected ?? undefined
+    )
+  }
+
+  isAnimating.value = false
+}
+
+// Watch for turn results to trigger animations
+watch(lastTurnResult, async (newResult) => {
+  if (newResult && newResult.moves.length > 0) {
+    await nextTick()
+    processTurnAnimations()
+  }
+}, { deep: true })
 
 const mountainColors: Record<MountainId, string> = {
   5: 'from-amber-700 to-amber-500',
@@ -37,9 +206,22 @@ const playerColorClasses: Record<PlayerColor, string> = {
 
 function getGoatsAtPosition(mountainId: MountainId, position: number) {
   if (!state.value) return []
-  return state.value.players.filter(
-    (p) => p.goatPositions[mountainId] === position
-  )
+  return state.value.players.filter((p) => {
+    // Use animated position if available
+    const animatedPos = getAnimatedPosition(p, mountainId)
+    return animatedPos === position
+  })
+}
+
+function getGoatAnimationClass(player: Player, mountainId: MountainId): string {
+  if (isBeingKnockedOff(player, mountainId)) {
+    return 'animate-knockoff'
+  }
+  const key = `${player.id}-${mountainId}`
+  if (animatingGoats.value.has(key)) {
+    return 'animate-climb'
+  }
+  return ''
 }
 
 function getMountainSteps(mountainId: MountainId) {
@@ -77,6 +259,15 @@ function handleNewGame() {
           🐐 Mountain Goats
         </h1>
         <div class="flex items-center gap-4">
+          <!-- Skip Animations Toggle -->
+          <button
+            class="text-xs px-2 py-1 rounded transition-colors"
+            :class="skipAnimations ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-700'"
+            :title="skipAnimations ? '动画已跳过' : '动画已启用'"
+            @click="toggleSkipAnimations"
+          >
+            {{ skipAnimations ? '⏩ 跳过动画' : '✨ 动画启用' }}
+          </button>
           <div v-if="state.lastRoundStarted" class="text-sm text-red-600 font-medium">
             最后一轮!
           </div>
@@ -204,8 +395,9 @@ function handleNewGame() {
                   v-for="player in getGoatsAtPosition(mountainId, position)"
                   :key="player.id"
                   :class="[
-                    'w-5 h-5 rounded-full border-2 text-xs flex items-center justify-center text-white font-bold',
-                    playerColorClasses[player.color]
+                    'w-5 h-5 rounded-full border-2 text-xs flex items-center justify-center text-white font-bold transition-all',
+                    playerColorClasses[player.color],
+                    getGoatAnimationClass(player, mountainId)
                   ]"
                   :title="player.name"
                 >
@@ -236,13 +428,20 @@ function handleNewGame() {
             >
               {{ player.name.charAt(0) }}
             </div>
-            <div>
+            <div class="relative">
               <div class="font-medium text-sm">{{ player.name }}</div>
               <div class="text-xs text-gray-500">
                 {{ gameStore.playerScores.find(s => s.player.id === player.id)?.score ?? 0 }} 分
                 <span v-if="player.bonusTokens.length > 0" class="text-green-600">
                   (+{{ player.bonusTokens.reduce((a, b) => a + b, 0) }})
                 </span>
+              </div>
+              <!-- Score increment animation -->
+              <div
+                v-if="scoreAnimations.get(player.id)?.show"
+                class="absolute -top-4 right-0 text-green-500 font-bold text-sm animate-score-float"
+              >
+                +{{ scoreAnimations.get(player.id)?.delta }}
               </div>
             </div>
           </div>
@@ -264,11 +463,73 @@ function handleNewGame() {
       <div v-if="phase === 'moving'" class="text-center">
         <button
           class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-lg"
+          :disabled="isAnimating"
           @click="handleNextTurn"
         >
-          结束回合 →
+          {{ isAnimating ? '动画中...' : '结束回合 →' }}
         </button>
+      </div>
+
+      <!-- Token Collection Animation Overlay -->
+      <div
+        v-for="(token, index) in tokenAnimations"
+        :key="`token-${index}`"
+        class="fixed z-50 pointer-events-none animate-token-fly"
+        style="top: 50%; left: 50%;"
+      >
+        <div class="w-8 h-8 rounded-full bg-yellow-400 border-2 border-yellow-500 flex items-center justify-center text-xs font-bold">
+          {{ token.value }}
+        </div>
       </div>
     </main>
   </div>
 </template>
+
+<style scoped>
+/* Goat climb animation */
+@keyframes goat-climb {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-climb {
+  animation: goat-climb 0.2s ease-in-out infinite;
+}
+
+/* Knockoff animation */
+@keyframes knockoff {
+  0% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(15deg); opacity: 1; }
+  100% { transform: scale(0.5) rotate(-30deg) translateY(20px); opacity: 0; }
+}
+
+.animate-knockoff {
+  animation: knockoff 0.5s ease-out forwards;
+}
+
+/* Score float animation */
+@keyframes score-float {
+  0% { transform: translateY(0); opacity: 1; }
+  100% { transform: translateY(-20px); opacity: 0; }
+}
+
+.animate-score-float {
+  animation: score-float 1s ease-out forwards;
+}
+
+/* Token fly animation */
+@keyframes token-fly {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -300%) scale(0.5);
+    opacity: 0;
+  }
+}
+
+.animate-token-fly {
+  animation: token-fly 0.6s ease-out forwards;
+}
+</style>
