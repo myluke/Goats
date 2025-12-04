@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T16:14:13.334Z",
+  "updatedAt": "2025-12-04T16:16:25.611Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -75,7 +75,7 @@
       "description": "Animate goat movement and knockoff effects"
     },
     "ui.multiple-ones": {
-      "status": "failing",
+      "status": "passing",
       "priority": 12,
       "module": "ui",
       "description": "UI for changing extra 1s to other values"

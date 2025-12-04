@@ -60,6 +60,36 @@ watch(
 
 const modifiableOneIndices = computed(() => findModifiableOnes(localDice.value))
 
+// Find the first (locked) one index
+const lockedOneIndex = computed(() => {
+  const firstOne = localDice.value.findIndex(d => d.value === 1)
+  return firstOne !== -1 ? firstOne : null
+})
+
+// Check if a die is the locked one (cannot be modified)
+function isLockedOne(index: number): boolean {
+  return lockedOneIndex.value === index && modifiableOneIndices.value.length > 0
+}
+
+// Check if a die is a modifiable one
+function isModifiableOne(index: number): boolean {
+  return modifiableOneIndices.value.includes(index) && showOneModifier.value
+}
+
+// Track which die is being edited (for inline value selector)
+const editingDieIndex = ref<number | null>(null)
+
+function startEditingDie(index: number) {
+  if (isModifiableOne(index)) {
+    editingDieIndex.value = index
+  }
+}
+
+function finishEditingDie(index: number, value: number) {
+  handleModifyOne(index, value)
+  editingDieIndex.value = null
+}
+
 const groupSums = computed(() => {
   return groups.value.map((group) => {
     const sum = calculateGroupSum(localDice.value, group)
@@ -238,54 +268,123 @@ const groupColors = [
     </div>
 
     <!-- Multiple Ones Modifier -->
-    <div v-if="showOneModifier && modifiableOneIndices.length > 0" class="mb-4 p-3 bg-yellow-50 rounded-lg">
-      <div class="text-sm font-medium text-yellow-800 mb-2">
-        您掷出了多个1! 可以将额外的1改为其他数字:
-      </div>
-      <div class="flex gap-4 items-center justify-center flex-wrap">
-        <div
-          v-for="dieIndex in modifiableOneIndices"
-          :key="dieIndex"
-          class="flex items-center gap-2"
-        >
-          <span class="text-sm text-gray-600">骰子 {{ dieIndex + 1 }}:</span>
-          <select
-            :value="oneModifications.get(dieIndex) ?? 1"
-            class="px-2 py-1 border rounded"
-            @change="handleModifyOne(dieIndex, parseInt(($event.target as HTMLSelectElement).value))"
-          >
-            <option v-for="v in 6" :key="v" :value="v">{{ v }}</option>
-          </select>
+    <div v-if="showOneModifier && modifiableOneIndices.length > 0" class="mb-4 p-4 bg-gradient-to-r from-yellow-50 to-amber-50 rounded-lg border border-yellow-200">
+      <div class="flex items-start gap-2 mb-3">
+        <span class="text-xl">💡</span>
+        <div>
+          <div class="text-sm font-medium text-yellow-800">
+            您掷出了 {{ modifiableOneIndices.length + 1 }} 个 1!
+          </div>
+          <div class="text-xs text-yellow-700 mt-1">
+            规则: 一个 1 必须保留，其余的 1 可以改为其他数字 (1-6)。点击高亮的骰子来修改。
+          </div>
         </div>
       </div>
+
+      <!-- Visual dice with modification UI -->
+      <div class="flex justify-center gap-3 mb-4">
+        <div
+          v-for="(die, index) in localDice"
+          :key="die.id"
+          class="relative"
+        >
+          <!-- Locked one indicator -->
+          <div
+            v-if="isLockedOne(index)"
+            class="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs z-10"
+            title="这个1必须保留"
+          >
+            🔒
+          </div>
+
+          <!-- Modifiable indicator -->
+          <div
+            v-if="isModifiableOne(index)"
+            class="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center text-white text-xs z-10 animate-pulse cursor-pointer"
+            title="点击修改这个1"
+          >
+            ✏️
+          </div>
+
+          <!-- Die display or value selector -->
+          <div
+            v-if="editingDieIndex === index"
+            class="w-14 h-14 rounded-lg bg-white shadow-lg border-2 border-yellow-400 flex flex-wrap items-center justify-center p-1 gap-0.5"
+          >
+            <button
+              v-for="v in 6"
+              :key="v"
+              :class="[
+                'w-4 h-4 rounded text-xs font-bold transition-colors',
+                v === (oneModifications.get(index) ?? 1) ? 'bg-yellow-500 text-white' : 'bg-gray-100 hover:bg-yellow-200'
+              ]"
+              @click="finishEditingDie(index, v)"
+            >
+              {{ v }}
+            </button>
+          </div>
+          <button
+            v-else
+            :class="[
+              'w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-bold transition-all border-2',
+              isLockedOne(index) ? 'bg-blue-50 border-blue-300 text-blue-700' : '',
+              isModifiableOne(index) ? 'bg-yellow-100 border-yellow-400 text-yellow-700 hover:scale-105 cursor-pointer ring-2 ring-yellow-300 ring-offset-2' : '',
+              !isLockedOne(index) && !isModifiableOne(index) ? 'bg-white border-gray-300 text-gray-700' : '',
+              oneModifications.has(index) ? 'bg-green-100 border-green-400 text-green-700' : ''
+            ]"
+            :disabled="!isModifiableOne(index)"
+            @click="startEditingDie(index)"
+          >
+            {{ oneModifications.get(index) ?? die.value }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Modification summary -->
+      <div v-if="oneModifications.size > 0" class="text-center text-sm text-green-700 mb-3">
+        已修改 {{ oneModifications.size }} 个骰子
+      </div>
+
       <button
-        class="mt-3 w-full py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+        class="w-full py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium shadow-sm"
         @click="handleConfirmOnes"
       >
-        确认修改
+        {{ oneModifications.size > 0 ? '确认修改' : '不修改，继续' }}
       </button>
     </div>
 
     <!-- Dice Display -->
     <div class="flex justify-center gap-3 mb-4">
-      <button
+      <div
         v-for="(die, index) in localDice"
         :key="die.id"
-        :class="[
-          'dice-button w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-bold transition-all border-2',
-          die.value === 0 && !isRolling ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white shadow-md',
-          selectedDice.has(index) ? 'ring-4 ring-green-500 scale-110' : '',
-          getDieGroupIndex(index) !== null ? groupColors[getDieGroupIndex(index)! % groupColors.length] + ' ring-2' : 'border-gray-300',
-          die.isModified ? 'border-yellow-400' : '',
-          phase === 'grouping' && !showOneModifier && !isRolling ? 'cursor-pointer hover:scale-105' : 'cursor-default',
-          isRolling ? diceAnimationClasses[index] : ''
-        ]"
-        :disabled="phase !== 'grouping' || showOneModifier || isRolling"
-        :style="isRolling ? { willChange: 'transform' } : {}"
-        @click="handleDieClick(index)"
+        class="relative"
       >
-        {{ getDieDisplayValue(index) }}
-      </button>
+        <!-- Modified indicator badge -->
+        <div
+          v-if="die.isModified"
+          class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center z-10"
+          title="此骰子已被修改"
+        >
+          <span class="text-white text-xs">✓</span>
+        </div>
+        <button
+          :class="[
+            'dice-button w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-bold transition-all border-2',
+            die.value === 0 && !isRolling ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white shadow-md',
+            selectedDice.has(index) ? 'ring-4 ring-green-500 scale-110' : '',
+            getDieGroupIndex(index) !== null ? groupColors[getDieGroupIndex(index)! % groupColors.length] + ' ring-2' : 'border-gray-300',
+            die.isModified ? 'border-yellow-400 bg-yellow-50' : '',
+            phase === 'grouping' && !showOneModifier && !isRolling ? 'cursor-pointer hover:scale-105' : 'cursor-default',
+            isRolling ? diceAnimationClasses[index] : ''
+          ]"
+          :disabled="phase !== 'grouping' || showOneModifier || isRolling"
+          :style="isRolling ? { willChange: 'transform' } : {}"
+          @click="handleDieClick(index)"
+        >
+          {{ getDieDisplayValue(index) }}
+        </button>
+      </div>
     </div>
 
     <!-- Groups Display -->
