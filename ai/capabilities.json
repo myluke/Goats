@@ -1,0 +1,56 @@
+{
+  "version": "1.0.0",
+  "capabilities": {
+    "hasTests": false,
+    "testCommand": "",
+    "testFramework": "",
+    "hasTypeCheck": false,
+    "typeCheckCommand": "",
+    "hasLint": false,
+    "lintCommand": "",
+    "hasBuild": false,
+    "buildCommand": "",
+    "hasGit": true,
+    "source": "ai-discovered",
+    "confidence": 0.5,
+    "languages": [
+      "markdown"
+    ],
+    "detectedAt": "2025-12-04T15:40:05.913Z",
+    "testInfo": {
+      "available": false,
+      "command": "",
+      "framework": "",
+      "confidence": 0,
+      "selectiveFileTemplate": "",
+      "selectiveNameTemplate": "",
+      "packageManager": "none"
+    },
+    "e2eInfo": {
+      "available": false,
+      "command": "",
+      "framework": "",
+      "confidence": 0,
+      "configFile": "",
+      "grepTemplate": "",
+      "fileTemplate": ""
+    },
+    "typeCheckInfo": {
+      "available": false,
+      "command": "",
+      "confidence": 0
+    },
+    "lintInfo": {
+      "available": false,
+      "command": "",
+      "confidence": 0
+    },
+    "buildInfo": {
+      "available": false,
+      "command": "",
+      "confidence": 0
+    }
+  },
+  "commitHash": "0684e2ecc1e5cf19425a5ee3453dbb5e371f7f5a",
+  "trackedFiles": []
+}

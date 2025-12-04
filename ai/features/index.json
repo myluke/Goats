@@ -1,0 +1,120 @@
+{
+  "version": "2.0.0",
+  "updatedAt": "2025-12-04T15:51:40.787Z",
+  "metadata": {
+    "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
+    "createdAt": "2025-12-04T15:45:00.000Z",
+    "updatedAt": "2025-12-04T15:45:00.000Z",
+    "version": "1.0.0"
+  },
+  "features": {
+    "setup.project-init": {
+      "status": "passing",
+      "priority": 1,
+      "module": "setup",
+      "description": "Initialize Vue3 + TypeScript + TailwindCSS + Shadcn project structure"
+    },
+    "core.game-state": {
+      "status": "failing",
+      "priority": 2,
+      "module": "core",
+      "description": "Define game state model (mountains, tokens, players, goats, dice)"
+    },
+    "core.game-rules": {
+      "status": "failing",
+      "priority": 3,
+      "module": "core",
+      "description": "Implement core game rules engine (dice grouping, movement, scoring)"
+    },
+    "core.turn-flow": {
+      "status": "failing",
+      "priority": 4,
+      "module": "core",
+      "description": "Implement turn flow logic (roll, group, move, bonus check, end turn)"
+    },
+    "core.end-game": {
+      "status": "failing",
+      "priority": 5,
+      "module": "core",
+      "description": "Implement end game detection and scoring with tiebreakers"
+    },
+    "ui.game-setup": {
+      "status": "failing",
+      "priority": 6,
+      "module": "ui",
+      "description": "Create game setup screen (2-4 players, names, colors)"
+    },
+    "ui.mountains": {
+      "status": "failing",
+      "priority": 7,
+      "module": "ui",
+      "description": "Render 6 mountains with paths, goat positions, and token piles"
+    },
+    "ui.dice-area": {
+      "status": "failing",
+      "priority": 8,
+      "module": "ui",
+      "description": "Create dice rolling area with grouping interaction"
+    },
+    "ui.player-panel": {
+      "status": "failing",
+      "priority": 9,
+      "module": "ui",
+      "description": "Display player list with scores, tokens, and current turn indicator"
+    },
+    "ui.dice-roll-animation": {
+      "status": "failing",
+      "priority": 10,
+      "module": "ui",
+      "description": "Add dice rolling animation and result display"
+    },
+    "ui.goat-movement": {
+      "status": "failing",
+      "priority": 11,
+      "module": "ui",
+      "description": "Animate goat movement and knockoff effects"
+    },
+    "ui.multiple-ones": {
+      "status": "failing",
+      "priority": 12,
+      "module": "ui",
+      "description": "UI for changing extra 1s to other values"
+    },
+    "ui.grouping-interaction": {
+      "status": "failing",
+      "priority": 13,
+      "module": "ui",
+      "description": "Drag/click dice grouping with real-time sum display"
+    },
+    "ui.end-game-screen": {
+      "status": "failing",
+      "priority": 14,
+      "module": "ui",
+      "description": "End game results screen with scores, rankings, and replay button"
+    },
+    "persistence.local-storage": {
+      "status": "failing",
+      "priority": 15,
+      "module": "persistence",
+      "description": "Save/restore game state to LocalStorage"
+    },
+    "ui.rules-help": {
+      "status": "failing",
+      "priority": 16,
+      "module": "ui",
+      "description": "In-game rules help modal/sidebar"
+    },
+    "ui.responsive-layout": {
+      "status": "failing",
+      "priority": 17,
+      "module": "ui",
+      "description": "Mobile-responsive layout with swipeable mountains"
+    },
+    "ui.new-player-guide": {
+      "status": "failing",
+      "priority": 18,
+      "module": "ui",
+      "description": "First-time player tutorial/demo mode"
+    }
+  }
+}

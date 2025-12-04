@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+
+  /* Custom colors for Mountain Goats theme */
+  --color-mountain-5: #8B4513;
+  --color-mountain-6: #A0522D;
+  --color-mountain-7: #6B8E23;
+  --color-mountain-8: #2E8B57;
+  --color-mountain-9: #4682B4;
+  --color-mountain-10: #6A5ACD;
+
+  /* Player colors */
+  --color-player-red: #DC2626;
+  --color-player-blue: #2563EB;
+  --color-player-green: #16A34A;
+  --color-player-yellow: #CA8A04;
+}
+
+body {
+  @apply min-h-screen bg-gradient-to-b from-sky-100 to-green-100;
+}
+
+#app {
+  @apply w-full min-h-screen;
+}
