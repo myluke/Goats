@@ -4,6 +4,7 @@ import { useGameStore } from '@/stores/game'
 import { MOUNTAIN_IDS, MOUNTAIN_PATH_LENGTHS } from '@/types/game'
 import type { MountainId, PlayerColor, Player } from '@/types/game'
 import DiceArea from './DiceArea.vue'
+import RulesModal from './RulesModal.vue'
 
 const gameStore = useGameStore()
 
@@ -219,6 +220,9 @@ function handleClearSave() {
   }
 }
 
+// Rules modal state
+const showRulesModal = ref(false)
+
 const mountainColors: Record<MountainId, string> = {
   5: 'from-amber-700 to-amber-500',
   6: 'from-orange-700 to-orange-500',
@@ -318,6 +322,14 @@ function handleNewGame() {
               </button>
             </div>
           </div>
+          <!-- Rules Button -->
+          <button
+            class="p-2 rounded-lg hover:bg-gray-100 transition-colors text-lg"
+            title="游戏规则"
+            @click="showRulesModal = true"
+          >
+            ❓
+          </button>
         </div>
         <div class="flex items-center gap-4">
           <!-- Skip Animations Toggle -->
@@ -552,6 +564,9 @@ function handleNewGame() {
         </div>
       </div>
     </main>
+
+    <!-- Rules Modal -->
+    <RulesModal :show="showRulesModal" @close="showRulesModal = false" />
   </div>
 </template>
 

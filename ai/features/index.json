@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T16:20:59.748Z",
+  "updatedAt": "2025-12-04T16:23:17.481Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -99,7 +99,7 @@
       "description": "Save/restore game state to LocalStorage"
     },
     "ui.rules-help": {
-      "status": "failing",
+      "status": "passing",
       "priority": 16,
       "module": "ui",
       "description": "In-game rules help modal/sidebar"
