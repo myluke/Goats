@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T15:57:46.429Z",
+  "updatedAt": "2025-12-04T15:58:56.774Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -33,7 +33,7 @@
       "description": "Implement turn flow logic (roll, group, move, bonus check, end turn)"
     },
     "core.end-game": {
-      "status": "failing",
+      "status": "passing",
       "priority": 5,
       "module": "core",
       "description": "Implement end game detection and scoring with tiebreakers"
