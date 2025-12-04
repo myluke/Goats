@@ -1,11 +1,44 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import type { PlayerColor } from '@/types/game'
 import { PLAYER_COLORS } from '@/types/game'
+import TutorialOverlay from './TutorialOverlay.vue'
 
 const emit = defineEmits<{
   startGame: [players: { name: string; color: PlayerColor }[]]
 }>()
+
+const TUTORIAL_COMPLETED_KEY = 'mountain-goats-tutorial-completed'
+
+// Tutorial state
+const showTutorial = ref(false)
+const isFirstVisit = ref(false)
+
+onMounted(() => {
+  // Check if first time visitor
+  const tutorialCompleted = localStorage.getItem(TUTORIAL_COMPLETED_KEY)
+  if (!tutorialCompleted) {
+    isFirstVisit.value = true
+    // Auto-show tutorial for first-time visitors
+    showTutorial.value = true
+  }
+})
+
+function handleTutorialComplete() {
+  localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+  showTutorial.value = false
+  isFirstVisit.value = false
+}
+
+function handleTutorialSkip() {
+  localStorage.setItem(TUTORIAL_COMPLETED_KEY, 'true')
+  showTutorial.value = false
+  isFirstVisit.value = false
+}
+
+function openTutorial() {
+  showTutorial.value = true
+}
 
 const playerCount = ref(2)
 const players = ref<{ name: string; color: PlayerColor }[]>([
@@ -62,13 +95,26 @@ function handleStartGame() {
 </script>
 
 <template>
+  <!-- Tutorial Overlay -->
+  <TutorialOverlay
+    :show="showTutorial"
+    @complete="handleTutorialComplete"
+    @skip="handleTutorialSkip"
+  />
+
   <div class="min-h-screen bg-gradient-to-b from-sky-100 to-green-100 flex flex-col">
     <!-- Header -->
     <header class="bg-white/80 backdrop-blur-sm shadow-sm py-4">
-      <div class="container mx-auto px-4">
+      <div class="container mx-auto px-4 flex items-center justify-between">
         <h1 class="text-2xl font-bold text-gray-800 flex items-center gap-2">
           🐐 Mountain Goats
         </h1>
+        <button
+          class="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-1"
+          @click="openTutorial"
+        >
+          📖 学习游戏
+        </button>
       </div>
     </header>
 
@@ -174,6 +220,12 @@ function handleStartGame() {
         <!-- Rules Preview -->
         <div class="mt-6 text-center text-sm text-gray-500">
           <p>掷骰子 → 组合点数(5-10) → 移动山羊 → 抢占山顶得分!</p>
+          <button
+            class="mt-2 text-blue-600 hover:text-blue-700 underline"
+            @click="openTutorial"
+          >
+            第一次玩? 点击学习规则
+          </button>
         </div>
       </div>
     </main>
