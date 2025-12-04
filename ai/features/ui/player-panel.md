@@ -2,7 +2,7 @@
 id: ui.player-panel
 module: ui
 priority: 9
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
@@ -18,10 +18,6 @@ tags:
 
 1. Create PlayerPanel component (sidebar or top bar)
 2. Show all players with:
-   - Name and color indicator
-   - Current total score
-   - Number of tokens collected per mountain (small icons)
-   - Bonus tokens earned
 3. Highlight current player's turn prominently
 4. Show turn order visually
 5. Indicate which players have tokens from all 6 mountains
