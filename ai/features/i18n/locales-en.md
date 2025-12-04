@@ -2,7 +2,7 @@
 id: i18n.locales-en
 module: i18n
 priority: 23
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:

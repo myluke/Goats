@@ -2,7 +2,7 @@
 id: i18n.locales-zh
 module: i18n
 priority: 22
-status: passing
+status: failing
 version: 1
 origin: manual
 dependsOn:
@@ -12,63 +12,64 @@ tags:
   - i18n
   - locales
 tddGuidance:
-  generatedAt: '2025-12-04T17:03:51.231Z'
+  generatedAt: '2025-12-04T17:05:55.858Z'
   generatedBy: codex
   forVersion: 1
   suggestedTestFiles:
     unit:
-      - tests/i18n/locales.zh.test.ts
-    e2e: []
+      - tests/i18n/locales-zh.test.ts
+    e2e:
+      - e2e/i18n/locales-zh.spec.ts
   unitTestCases:
-    - name: creates zh locale file
+    - name: should expose zh locale module at src/i18n/locales/zh.ts
       assertions:
-        - const zh = await import('src/i18n/locales/zh')
-        - expect(zh).toBeDefined()
-        - expect(zh.default || zh).toBeTypeOf('object')
-    - name: includes all common module texts
-      assertions:
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
+        - expect(zh.app.title).toBe('Mountain Goats')
         - >-
-          const zh = (await import('src/i18n/locales/zh')).default || (await
-          import('src/i18n/locales/zh'))
-        - expect(zh.common.score).toBe('分')
-        - expect(zh.common.round).toBe('回合')
-        - expect(zh.common.hill).toBe('号山')
-    - name: includes all setup module texts
+          expect(Object.keys(zh)).toEqual(expect.arrayContaining(['common','app','setup','game','dice','rules','tutorial']))
+    - name: should include all common module texts
       assertions:
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
         - >-
-          const zh = (await import('src/i18n/locales/zh')).default || (await
-          import('src/i18n/locales/zh'))
-        - expect(zh.setup.startNewGame).toBe('开始新游戏')
-        - expect(zh.setup.playerCount).toBe('玩家人数')
-    - name: includes all game module texts
+          expect(zh.common).toMatchObject({points:'分',mountain:'号山',turn:'回合',player:'玩家',remaining:'剩余',pieces:'枚'})
+        - expect(Object.keys(zh.common)).toHaveLength(6)
+    - name: should include all setup module texts
       assertions:
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
+        - expect(zh.setup.title).toBe('开始新游戏')
+        - expect(zh.setup.startGame).toBe('开始游戏')
         - >-
-          const zh = (await import('src/i18n/locales/zh')).default || (await
-          import('src/i18n/locales/zh'))
-        - expect(zh.game.rollDice).toBe('掷骰子')
-        - expect(zh.game.confirmMove).toBe('确认移动')
-    - name: includes all rules sections
+          expect(Object.keys(zh.setup.colors)).toEqual(['red','blue','green','yellow'])
+    - name: >-
+        should include all game and dice module texts for actions like rolling
+        and confirming moves
       assertions:
-        - >-
-          const zh = (await import('src/i18n/locales/zh')).default || (await
-          import('src/i18n/locales/zh'))
-        - expect(Object.keys(zh.rules)).toHaveLength(10)
-    - name: includes all tutorial steps
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
+        - expect(zh.game.gameMenu).toBe('游戏菜单')
+        - expect(zh.dice.rollDice).toBe('掷骰子')
+        - expect(zh.dice.confirmMove).toBe('确认移动')
+        - 'expect(zh.game.tokensRemaining).toBe(''剩余 {count} 枚'')'
+    - name: should include all rules sections (10 parts) with titles and content
       assertions:
-        - >-
-          const zh = (await import('src/i18n/locales/zh')).default || (await
-          import('src/i18n/locales/zh'))
-        - expect(Array.isArray(zh.tutorial.steps)).toBe(true)
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
+        - expect(Object.keys(zh.rules.sections)).toHaveLength(10)
+        - expect(zh.rules.sections.objective.title).toBe('游戏目标')
+        - 'expect(zh.rules.sections.turn.example).toContain(''掷出 [2,3,4,1]'')'
+    - name: should include all tutorial steps (11 steps)
+      assertions:
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
         - expect(zh.tutorial.steps).toHaveLength(11)
-    - name: exports complete zh translation object
+        - >-
+          expect(zh.tutorial.steps[0]).toMatchObject({id:'welcome',title:'欢迎来到
+          Mountain Goats!'})
+        - >-
+          expect(zh.tutorial.steps[10]).toMatchObject({id:'ready',title:'准备开始!'})
+    - name: should export a complete Chinese translation object for i18n
       assertions:
+        - const zh = (await import('../../src/i18n/locales/zh.ts')).default
         - >-
-          const zh = (await import('src/i18n/locales/zh')).default || (await
-          import('src/i18n/locales/zh'))
-        - >-
-          expect(zh).toMatchObject({ common: expect.any(Object), setup:
-          expect.any(Object), game: expect.any(Object), rules:
-          expect.any(Object), tutorial: expect.any(Object) })
+          expect(zh).toMatchObject({common:expect.any(Object),app:expect.any(Object),setup:expect.any(Object),game:expect.any(Object),dice:expect.any(Object),rules:expect.any(Object),tutorial:expect.any(Object)})
+        - expect(JSON.stringify(zh)).not.toContain('占位符')
   e2eScenarios: []
   frameworkHint: vitest
 ---
