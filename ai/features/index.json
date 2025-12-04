@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T17:02:08.854Z",
+  "updatedAt": "2025-12-04T17:05:15.204Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -123,7 +123,7 @@
       "description": "安装 vue-i18n 并创建 i18n 配置"
     },
     "i18n.locales-zh": {
-      "status": "failing",
+      "status": "passing",
       "priority": 22,
       "module": "i18n",
       "description": "创建中文翻译文件"

@@ -2,50 +2,51 @@
   "version": "1.0.0",
   "capabilities": {
     "hasTests": false,
-    "testCommand": "",
-    "testFramework": "",
+    "testCommand": null,
+    "testFramework": null,
     "hasTypeCheck": true,
     "typeCheckCommand": "npx vue-tsc -b",
     "hasLint": false,
-    "lintCommand": "",
+    "lintCommand": null,
     "hasBuild": true,
     "buildCommand": "npm run build",
     "hasGit": true,
     "source": "ai-discovered",
-    "confidence": 0.41400000000000003,
+    "confidence": 0.466,
     "languages": [
       "TypeScript",
-      "Vue",
-      "Vite"
+      "Vue 3",
+      "Vite",
+      "Tailwind CSS"
     ],
-    "detectedAt": "2025-12-04T16:08:22.425Z",
+    "detectedAt": "2025-12-04T17:04:16.375Z",
     "testInfo": {
       "available": false,
-      "command": "",
-      "framework": "",
-      "confidence": 0.1,
-      "selectiveFileTemplate": "",
-      "selectiveNameTemplate": "",
+      "command": null,
+      "framework": null,
+      "confidence": 0.2,
+      "selectiveFileTemplate": null,
+      "selectiveNameTemplate": null,
       "packageManager": "npm"
     },
     "e2eInfo": {
       "available": false,
-      "command": "",
-      "framework": "",
-      "confidence": 0.1,
-      "configFile": "",
-      "grepTemplate": "",
-      "fileTemplate": ""
+      "command": null,
+      "framework": null,
+      "confidence": 0.2,
+      "configFile": null,
+      "grepTemplate": null,
+      "fileTemplate": null
     },
     "typeCheckInfo": {
       "available": true,
       "command": "npx vue-tsc -b",
-      "confidence": 0.82
+      "confidence": 0.78
     },
     "lintInfo": {
       "available": false,
-      "command": "",
-      "confidence": 0.1
+      "command": null,
+      "confidence": 0.2
     },
     "buildInfo": {
       "available": true,
@@ -53,7 +54,7 @@
       "confidence": 0.95
     }
   },
-  "commitHash": "8d92a23a854082d9ac33100d683abb039f3e1819",
+  "commitHash": "a74c60aab23ddb764e9e9ee02d6af21cdb77b1bc",
   "trackedFiles": [
     "package.json",
     "package-lock.json",
