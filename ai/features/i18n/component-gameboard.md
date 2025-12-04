@@ -2,7 +2,7 @@
 id: i18n.component-gameboard
 module: i18n
 priority: 25
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:

@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { computed, ref, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useGameStore } from '@/stores/game'
 import { MOUNTAIN_IDS, MOUNTAIN_PATH_LENGTHS } from '@/types/game'
 import type { MountainId, PlayerColor, Player } from '@/types/game'
 import DiceArea from './DiceArea.vue'
 import RulesModal from './RulesModal.vue'
 
+const { t } = useI18n()
 const gameStore = useGameStore()
 
 const _emit = defineEmits<{
@@ -227,7 +229,7 @@ function handleSaveAndQuit() {
 }
 
 function handleClearSave() {
-  if (confirm('确定要删除存档吗?')) {
+  if (confirm(t('game.confirmDeleteSave'))) {
     gameStore.clearSavedGame()
     showGameMenu.value = false
   }
@@ -310,7 +312,7 @@ function handleNewGame() {
               <button
                 class="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center"
                 @click="toggleGameMenu"
-                title="游戏菜单"
+                :title="t('game.gameMenu')"
               >
                 ☰
               </button>
@@ -323,20 +325,20 @@ function handleNewGame() {
                   class="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
                   @click="handleSaveAndQuit"
                 >
-                  💾 保存退出
+                  💾 {{ t('game.saveAndQuit') }}
                 </button>
                 <button
                   class="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
                   @click="handleClearSave"
                 >
-                  🗑️ 删除存档
+                  🗑️ {{ t('game.deleteSave') }}
                 </button>
               </div>
             </div>
             <!-- Rules Button -->
             <button
               class="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 transition-colors text-lg flex items-center justify-center"
-              title="游戏规则"
+              :title="t('game.gameRules')"
               @click="showRulesModal = true"
             >
               ❓
@@ -362,17 +364,17 @@ function handleNewGame() {
             <button
               class="hidden sm:flex text-xs px-2 py-1 rounded transition-colors items-center"
               :class="skipAnimations ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-700'"
-              :title="skipAnimations ? '动画已跳过' : '动画已启用'"
+              :title="skipAnimations ? t('game.animationDisabled') : t('game.animationEnabled')"
               @click="toggleSkipAnimations"
             >
               {{ skipAnimations ? '⏩' : '✨' }}
-              <span class="hidden md:inline ml-1">{{ skipAnimations ? '跳过动画' : '动画启用' }}</span>
+              <span class="hidden md:inline ml-1">{{ skipAnimations ? t('game.animationDisabled') : t('game.animationEnabled') }}</span>
             </button>
             <div v-if="state.lastRoundStarted" class="text-xs sm:text-sm text-red-600 font-bold bg-red-50 px-2 py-1 rounded">
-              最后一轮!
+              {{ t('game.lastRound') }}
             </div>
             <div class="text-xs sm:text-sm text-gray-600 hidden sm:block">
-              第{{ state.turnCount + 1 }}回合
+              {{ t('game.turnNumber', { turn: state.turnCount + 1 }) }}
             </div>
           </div>
         </div>
@@ -383,9 +385,9 @@ function handleNewGame() {
     <div v-if="isGameOver && gameResults" class="flex-1 flex items-center justify-center p-4">
       <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full text-center">
         <div class="text-5xl mb-4">🏆</div>
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">游戏结束!</h2>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ t('game.gameOver') }}</h2>
         <div class="text-xl text-green-600 font-bold mb-6">
-          {{ gameResults.winner.name }} 获胜!
+          {{ t('game.winner', { name: gameResults.winner.name }) }}
         </div>
 
         <!-- Rankings -->
@@ -408,7 +410,7 @@ function handleNewGame() {
               />
               <span>{{ ranking.player.name }}</span>
             </div>
-            <span class="font-bold text-lg">{{ ranking.score }} 分</span>
+            <span class="font-bold text-lg">{{ ranking.score }} {{ t('common.points') }}</span>
           </div>
         </div>
 
@@ -420,7 +422,7 @@ function handleNewGame() {
           class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
           @click="handleNewGame"
         >
-          再来一局
+          {{ t('game.playAgain') }}
         </button>
       </div>
     </div>
@@ -432,13 +434,13 @@ function handleNewGame() {
         <div class="text-xs sm:text-sm text-blue-800">
           <span v-for="(move, index) in lastTurnResult.moves" :key="index">
             {{ index > 0 ? ', ' : '' }}
-            {{ move.mountainId }}号山
-            <span v-if="move.tokenCollected"> (+{{ move.tokenCollected }}分)</span>
-            <span v-if="move.knockedOff" class="text-red-600"> 挤下了{{ move.knockedOff }}</span>
+            {{ t('game.mountainMove', { mountain: move.mountainId }) }}
+            <span v-if="move.tokenCollected"> {{ t('game.pointsGained', { points: move.tokenCollected }) }}</span>
+            <span v-if="move.knockedOff" class="text-red-600"> {{ t('game.knockedOff', { player: move.knockedOff }) }}</span>
           </span>
         </div>
         <div v-if="lastTurnResult.bonusAwarded" class="text-green-600 font-bold mt-1 text-sm">
-          获得奖励筹码: +{{ lastTurnResult.bonusAwarded }} 分!
+          {{ t('game.bonusAwarded', { points: lastTurnResult.bonusAwarded }) }}
         </div>
       </div>
 
@@ -458,7 +460,7 @@ function handleNewGame() {
                 state.mountains[mountainId].tokenPile.length === 0 ? 'text-red-500 font-bold' : 'text-gray-500'
               ]"
             >
-              剩余 {{ state.mountains[mountainId].tokenPile.length }} 枚
+              {{ t('game.tokensRemaining', { count: state.mountains[mountainId].tokenPile.length }) }}
             </div>
             <!-- +1 indicator when this mountain will receive movement -->
             <div
@@ -528,7 +530,7 @@ function handleNewGame() {
             <div class="relative min-w-0">
               <div class="font-medium text-xs sm:text-sm truncate">{{ player.name }}</div>
               <div class="text-[10px] sm:text-xs text-gray-500">
-                {{ gameStore.playerScores.find(s => s.player.id === player.id)?.score ?? 0 }} 分
+                {{ gameStore.playerScores.find(s => s.player.id === player.id)?.score ?? 0 }} {{ t('common.points') }}
                 <span v-if="player.bonusTokens.length > 0" class="text-green-600">
                   (+{{ player.bonusTokens.reduce((a, b) => a + b, 0) }})
                 </span>
