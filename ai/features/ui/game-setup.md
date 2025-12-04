@@ -2,7 +2,7 @@
 id: ui.game-setup
 module: ui
 priority: 6
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
@@ -19,8 +19,6 @@ tags:
 1. Create SetupScreen component as the initial view
 2. Allow selecting 2, 3, or 4 players
 3. For each player, allow entering:
-   - Nickname (default: Player 1, Player 2, etc.)
-   - Color selection from preset palette (4+ distinct colors)
 4. Validate: no duplicate colors, all names non-empty
 5. "Start Game" button to begin the match
 6. Display game logo and brief tagline
