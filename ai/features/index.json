@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T15:56:19.037Z",
+  "updatedAt": "2025-12-04T15:57:46.429Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -27,7 +27,7 @@
       "description": "Implement core game rules engine (dice grouping, movement, scoring)"
     },
     "core.turn-flow": {
-      "status": "failing",
+      "status": "passing",
       "priority": 4,
       "module": "core",
       "description": "Implement turn flow logic (roll, group, move, bonus check, end turn)"
