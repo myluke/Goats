@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { PlayerColor } from '@/types/game'
 import { PLAYER_COLORS } from '@/types/game'
 import TutorialOverlay from './TutorialOverlay.vue'
+
+const { t } = useI18n()
 
 const emit = defineEmits<{
   startGame: [players: { name: string; color: PlayerColor }[]]
@@ -42,20 +45,20 @@ function openTutorial() {
 
 const playerCount = ref(2)
 const players = ref<{ name: string; color: PlayerColor }[]>([
-  { name: '玩家 1', color: 'red' },
-  { name: '玩家 2', color: 'blue' },
-  { name: '玩家 3', color: 'green' },
-  { name: '玩家 4', color: 'yellow' },
+  { name: '', color: 'red' },
+  { name: '', color: 'blue' },
+  { name: '', color: 'green' },
+  { name: '', color: 'yellow' },
 ])
 
 const activePlayers = computed(() => players.value.slice(0, playerCount.value))
 
-const colorLabels: Record<PlayerColor, string> = {
-  red: '红色',
-  blue: '蓝色',
-  green: '绿色',
-  yellow: '黄色',
-}
+const colorLabels = computed(() => ({
+  red: t('setup.colors.red'),
+  blue: t('setup.colors.blue'),
+  green: t('setup.colors.green'),
+  yellow: t('setup.colors.yellow'),
+}))
 
 const colorClasses: Record<PlayerColor, string> = {
   red: 'bg-red-500',
@@ -113,7 +116,7 @@ function handleStartGame() {
           class="px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors flex items-center gap-1"
           @click="openTutorial"
         >
-          📖 学习游戏
+          📖 {{ t('setup.learnGame') }}
         </button>
       </div>
     </header>
@@ -126,8 +129,8 @@ function handleStartGame() {
           <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-white shadow-lg mb-4">
             <span class="text-4xl">🏔️</span>
           </div>
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">开始新游戏</h2>
-          <p class="text-gray-600">设置玩家人数和信息</p>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">{{ t('setup.title') }}</h2>
+          <p class="text-gray-600">{{ t('setup.subtitle') }}</p>
         </div>
 
         <!-- Setup Card -->
@@ -135,7 +138,7 @@ function handleStartGame() {
           <!-- Player Count Selection -->
           <div class="mb-6">
             <label class="block text-sm font-medium text-gray-700 mb-2">
-              玩家人数
+              {{ t('setup.playerCount') }}
             </label>
             <div class="flex gap-2">
               <button
@@ -149,7 +152,7 @@ function handleStartGame() {
                 ]"
                 @click="handlePlayerCountChange(count)"
               >
-                {{ count }} 人
+                {{ count }} {{ t('setup.playerCountUnit') }}
               </button>
             </div>
           </div>
@@ -175,7 +178,7 @@ function handleStartGame() {
               <input
                 v-model="player.name"
                 type="text"
-                :placeholder="`玩家 ${index + 1}`"
+                :placeholder="t('setup.playerPlaceholder', { index: index + 1 })"
                 class="flex-1 px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none"
               />
 
@@ -213,18 +216,18 @@ function handleStartGame() {
             ]"
             @click="handleStartGame"
           >
-            开始游戏 🎲
+            {{ t('setup.startGame') }} 🎲
           </button>
         </div>
 
         <!-- Rules Preview -->
         <div class="mt-6 text-center text-sm text-gray-500">
-          <p>掷骰子 → 组合点数(5-10) → 移动山羊 → 抢占山顶得分!</p>
+          <p>{{ t('setup.rulesHint') }}</p>
           <button
             class="mt-2 text-blue-600 hover:text-blue-700 underline"
             @click="openTutorial"
           >
-            第一次玩? 点击学习规则
+            {{ t('setup.firstTimeHint') }}
           </button>
         </div>
       </div>

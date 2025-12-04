@@ -1,6 +1,6 @@
 {
   "version": "2.0.0",
-  "updatedAt": "2025-12-04T17:07:28.180Z",
+  "updatedAt": "2025-12-04T17:09:17.512Z",
   "metadata": {
     "projectGoal": "Mountain Goats 网页版桌游 - 2-4人本地Hotseat模式",
     "createdAt": "2025-12-04T15:45:00.000Z",
@@ -135,7 +135,7 @@
       "description": "创建英文翻译文件"
     },
     "i18n.component-setup": {
-      "status": "failing",
+      "status": "passing",
       "priority": 24,
       "module": "i18n",
       "description": "国际化 SetupScreen 组件"
