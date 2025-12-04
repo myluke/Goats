@@ -1,0 +1,283 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import type { Die, MountainId } from '@/types/game'
+import {
+  calculateGroupSum,
+  isValidMountainSum,
+  findModifiableOnes,
+} from '@/lib/rules'
+
+const props = defineProps<{
+  dice: Die[]
+  phase: string
+  canRoll: boolean
+  canGroup: boolean
+}>()
+
+const emit = defineEmits<{
+  roll: []
+  modifyOnes: [modifications: Map<number, number>]
+  confirmGroups: [groups: number[][]]
+}>()
+
+// Local grouping state
+const localDice = ref<Die[]>([...props.dice])
+const selectedDice = ref<Set<number>>(new Set())
+const groups = ref<number[][]>([])
+const showOneModifier = ref(false)
+const oneModifications = ref<Map<number, number>>(new Map())
+
+// Sync local dice with props
+import { watch } from 'vue'
+watch(
+  () => props.dice,
+  (newDice) => {
+    localDice.value = newDice.map((d) => ({ ...d }))
+    // Check for multiple ones
+    const modifiableOnes = findModifiableOnes(newDice)
+    if (modifiableOnes.length > 0 && !newDice.some((d) => d.isModified)) {
+      showOneModifier.value = true
+    } else {
+      showOneModifier.value = false
+    }
+  },
+  { deep: true, immediate: true }
+)
+
+const modifiableOneIndices = computed(() => findModifiableOnes(localDice.value))
+
+const groupSums = computed(() => {
+  return groups.value.map((group) => {
+    const sum = calculateGroupSum(localDice.value, group)
+    return {
+      indices: group,
+      sum,
+      isValid: isValidMountainSum(sum),
+      mountainId: isValidMountainSum(sum) ? (sum as MountainId) : null,
+    }
+  })
+})
+
+const allDiceGrouped = computed(() => {
+  const grouped = new Set(groups.value.flat())
+  return grouped.size === localDice.value.length
+})
+
+const hasValidMoves = computed(() => {
+  return groupSums.value.some((g) => g.isValid)
+})
+
+function handleRoll() {
+  groups.value = []
+  selectedDice.value.clear()
+  emit('roll')
+}
+
+function handleDieClick(index: number) {
+  if (props.phase !== 'grouping' || showOneModifier.value) return
+
+  if (selectedDice.value.has(index)) {
+    selectedDice.value.delete(index)
+  } else {
+    selectedDice.value.add(index)
+  }
+  selectedDice.value = new Set(selectedDice.value)
+}
+
+function handleCreateGroup() {
+  if (selectedDice.value.size === 0) return
+
+  const newGroup = Array.from(selectedDice.value)
+  groups.value.push(newGroup)
+  selectedDice.value.clear()
+}
+
+function handleRemoveGroup(groupIndex: number) {
+  groups.value.splice(groupIndex, 1)
+}
+
+function handleReset() {
+  groups.value = []
+  selectedDice.value.clear()
+}
+
+function handleConfirm() {
+  if (allDiceGrouped.value && hasValidMoves.value) {
+    emit('confirmGroups', groups.value)
+    groups.value = []
+    selectedDice.value.clear()
+  }
+}
+
+function handleModifyOne(dieIndex: number, newValue: number) {
+  oneModifications.value.set(dieIndex, newValue)
+}
+
+function handleConfirmOnes() {
+  if (oneModifications.value.size > 0) {
+    emit('modifyOnes', new Map(oneModifications.value))
+    showOneModifier.value = false
+    oneModifications.value.clear()
+  }
+}
+
+function getDieGroupIndex(dieIndex: number): number | null {
+  for (let i = 0; i < groups.value.length; i++) {
+    if (groups.value[i]?.includes(dieIndex)) {
+      return i
+    }
+  }
+  return null
+}
+
+const groupColors = [
+  'ring-blue-500 bg-blue-50',
+  'ring-green-500 bg-green-50',
+  'ring-purple-500 bg-purple-50',
+  'ring-orange-500 bg-orange-50',
+]
+</script>
+
+<template>
+  <div class="bg-white rounded-xl shadow-lg p-4">
+    <!-- Phase Indicator -->
+    <div class="text-center text-sm text-gray-500 mb-3">
+      {{ phase === 'rolling' ? '点击掷骰开始回合' : phase === 'grouping' ? '选择骰子组成小组' : '移动山羊中...' }}
+    </div>
+
+    <!-- Multiple Ones Modifier -->
+    <div v-if="showOneModifier && modifiableOneIndices.length > 0" class="mb-4 p-3 bg-yellow-50 rounded-lg">
+      <div class="text-sm font-medium text-yellow-800 mb-2">
+        您掷出了多个1! 可以将额外的1改为其他数字:
+      </div>
+      <div class="flex gap-4 items-center justify-center flex-wrap">
+        <div
+          v-for="dieIndex in modifiableOneIndices"
+          :key="dieIndex"
+          class="flex items-center gap-2"
+        >
+          <span class="text-sm text-gray-600">骰子 {{ dieIndex + 1 }}:</span>
+          <select
+            :value="oneModifications.get(dieIndex) ?? 1"
+            class="px-2 py-1 border rounded"
+            @change="handleModifyOne(dieIndex, parseInt(($event.target as HTMLSelectElement).value))"
+          >
+            <option v-for="v in 6" :key="v" :value="v">{{ v }}</option>
+          </select>
+        </div>
+      </div>
+      <button
+        class="mt-3 w-full py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+        @click="handleConfirmOnes"
+      >
+        确认修改
+      </button>
+    </div>
+
+    <!-- Dice Display -->
+    <div class="flex justify-center gap-3 mb-4">
+      <button
+        v-for="(die, index) in localDice"
+        :key="die.id"
+        :class="[
+          'w-14 h-14 rounded-lg flex items-center justify-center text-2xl font-bold transition-all border-2',
+          die.value === 0 ? 'bg-gray-100 border-gray-200 text-gray-400' : 'bg-white shadow-md',
+          selectedDice.has(index) ? 'ring-4 ring-green-500 scale-110' : '',
+          getDieGroupIndex(index) !== null ? groupColors[getDieGroupIndex(index)! % groupColors.length] + ' ring-2' : 'border-gray-300',
+          die.isModified ? 'border-yellow-400' : '',
+          phase === 'grouping' && !showOneModifier ? 'cursor-pointer hover:scale-105' : 'cursor-default'
+        ]"
+        :disabled="phase !== 'grouping' || showOneModifier"
+        @click="handleDieClick(index)"
+      >
+        {{ die.value || '?' }}
+      </button>
+    </div>
+
+    <!-- Groups Display -->
+    <div v-if="groups.length > 0" class="mb-4">
+      <div class="text-sm text-gray-600 mb-2">已创建的分组:</div>
+      <div class="flex gap-2 flex-wrap justify-center">
+        <div
+          v-for="(group, gIndex) in groupSums"
+          :key="gIndex"
+          :class="[
+            'px-3 py-1 rounded-full text-sm flex items-center gap-2',
+            group.isValid ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+          ]"
+        >
+          <span>
+            {{ group.indices.map(i => localDice[i]?.value).join('+') }} = {{ group.sum }}
+          </span>
+          <span v-if="group.mountainId" class="font-bold">
+            → {{ group.mountainId }}号山
+          </span>
+          <button
+            class="ml-1 text-gray-400 hover:text-red-500"
+            @click="handleRemoveGroup(gIndex)"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="flex gap-2 justify-center">
+      <button
+        v-if="phase === 'rolling'"
+        :disabled="!canRoll"
+        :class="[
+          'px-6 py-3 rounded-lg font-medium transition-all',
+          canRoll
+            ? 'bg-green-600 text-white hover:bg-green-700 shadow-lg'
+            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+        ]"
+        @click="handleRoll"
+      >
+        🎲 掷骰子
+      </button>
+
+      <template v-if="phase === 'grouping' && !showOneModifier">
+        <button
+          :disabled="selectedDice.size === 0"
+          :class="[
+            'px-4 py-2 rounded-lg font-medium transition-all',
+            selectedDice.size > 0
+              ? 'bg-blue-500 text-white hover:bg-blue-600'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          ]"
+          @click="handleCreateGroup"
+        >
+          创建分组
+        </button>
+
+        <button
+          :disabled="groups.length === 0"
+          class="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
+          @click="handleReset"
+        >
+          重置
+        </button>
+
+        <button
+          :disabled="!allDiceGrouped || !hasValidMoves"
+          :class="[
+            'px-6 py-2 rounded-lg font-medium transition-all',
+            allDiceGrouped && hasValidMoves
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+          ]"
+          @click="handleConfirm"
+        >
+          确认移动
+        </button>
+      </template>
+    </div>
+
+    <!-- Help Text -->
+    <div v-if="phase === 'grouping' && !showOneModifier" class="mt-3 text-xs text-gray-500 text-center">
+      点击骰子选中，然后点击"创建分组"。只有和为5-10的分组才会移动山羊。
+    </div>
+  </div>
+</template>

@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useGameStore } from '@/stores/game'
 import { MOUNTAIN_IDS, MOUNTAIN_PATH_LENGTHS } from '@/types/game'
 import type { MountainId, PlayerColor } from '@/types/game'
+import DiceArea from './DiceArea.vue'
 
 const gameStore = useGameStore()
 
@@ -13,6 +14,10 @@ const emit = defineEmits<{
 const state = computed(() => gameStore.state)
 const currentPlayer = computed(() => gameStore.currentPlayer)
 const phase = computed(() => gameStore.phase)
+const turnState = computed(() => gameStore.turnState)
+const lastTurnResult = computed(() => gameStore.lastTurnResult)
+const isGameOver = computed(() => gameStore.isGameOver)
+const gameResults = computed(() => gameStore.gameResults)
 
 const mountainColors: Record<MountainId, string> = {
   5: 'from-amber-700 to-amber-500',
@@ -39,8 +44,27 @@ function getGoatsAtPosition(mountainId: MountainId, position: number) {
 
 function getMountainSteps(mountainId: MountainId) {
   const pathLength = MOUNTAIN_PATH_LENGTHS[mountainId]
-  // Return positions from summit (pathLength) down to base (0)
   return Array.from({ length: pathLength + 1 }, (_, i) => pathLength - i)
+}
+
+function handleRoll() {
+  gameStore.rollDice()
+}
+
+function handleModifyOnes(modifications: Map<number, number>) {
+  gameStore.modifyOnes(modifications)
+}
+
+function handleConfirmGroups(groups: number[][]) {
+  gameStore.confirmGroups(groups)
+}
+
+function handleNextTurn() {
+  gameStore.nextTurn()
+}
+
+function handleNewGame() {
+  gameStore.resetGame()
 }
 </script>
 
@@ -53,11 +77,14 @@ function getMountainSteps(mountainId: MountainId) {
           🐐 Mountain Goats
         </h1>
         <div class="flex items-center gap-4">
+          <div v-if="state.lastRoundStarted" class="text-sm text-red-600 font-medium">
+            最后一轮!
+          </div>
           <div class="text-sm text-gray-600">
             回合 {{ state.turnCount + 1 }}
           </div>
           <div
-            v-if="currentPlayer"
+            v-if="currentPlayer && !isGameOver"
             class="flex items-center gap-2"
           >
             <div
@@ -72,8 +99,69 @@ function getMountainSteps(mountainId: MountainId) {
       </div>
     </header>
 
+    <!-- Game Over Screen -->
+    <div v-if="isGameOver && gameResults" class="flex-1 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full text-center">
+        <div class="text-5xl mb-4">🏆</div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">游戏结束!</h2>
+        <div class="text-xl text-green-600 font-bold mb-6">
+          {{ gameResults.winner.name }} 获胜!
+        </div>
+
+        <!-- Rankings -->
+        <div class="space-y-2 mb-6">
+          <div
+            v-for="ranking in gameResults.rankings"
+            :key="ranking.player.id"
+            :class="[
+              'flex items-center justify-between p-3 rounded-lg',
+              ranking.rank === 1 ? 'bg-yellow-100' : 'bg-gray-50'
+            ]"
+          >
+            <div class="flex items-center gap-2">
+              <span class="font-bold text-lg">{{ ranking.rank }}.</span>
+              <div
+                :class="[
+                  'w-6 h-6 rounded-full',
+                  playerColorClasses[ranking.player.color]
+                ]"
+              />
+              <span>{{ ranking.player.name }}</span>
+            </div>
+            <span class="font-bold text-lg">{{ ranking.score }} 分</span>
+          </div>
+        </div>
+
+        <div v-if="gameResults.tiebreakerApplied" class="text-sm text-gray-600 mb-4">
+          {{ gameResults.tiebreakerExplanation }}
+        </div>
+
+        <button
+          class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
+          @click="handleNewGame"
+        >
+          再来一局
+        </button>
+      </div>
+    </div>
+
     <!-- Game Area -->
-    <main class="flex-1 container mx-auto px-4 py-4 flex flex-col gap-4">
+    <main v-else class="flex-1 container mx-auto px-4 py-4 flex flex-col gap-4">
+      <!-- Turn Result Notification -->
+      <div v-if="lastTurnResult && lastTurnResult.moves.length > 0" class="bg-blue-50 rounded-lg p-3 text-center">
+        <div class="text-sm text-blue-800">
+          <span v-for="(move, index) in lastTurnResult.moves" :key="index">
+            {{ index > 0 ? ', ' : '' }}
+            {{ move.mountainId }}号山
+            <span v-if="move.tokenCollected"> (+{{ move.tokenCollected }}分)</span>
+            <span v-if="move.knockedOff" class="text-red-600"> 挤下了{{ move.knockedOff }}</span>
+          </span>
+        </div>
+        <div v-if="lastTurnResult.bonusAwarded" class="text-green-600 font-bold mt-1">
+          获得奖励筹码: +{{ lastTurnResult.bonusAwarded }} 分!
+        </div>
+      </div>
+
       <!-- Mountains -->
       <div class="flex-1 flex items-end justify-center gap-2 overflow-x-auto pb-4">
         <div
@@ -84,7 +172,12 @@ function getMountainSteps(mountainId: MountainId) {
           <!-- Mountain Number & Token Count -->
           <div class="text-center mb-2">
             <div class="text-2xl font-bold text-gray-800">{{ mountainId }}</div>
-            <div class="text-xs text-gray-500">
+            <div
+              :class="[
+                'text-xs',
+                state.mountains[mountainId].tokenPile.length === 0 ? 'text-red-500 font-bold' : 'text-gray-500'
+              ]"
+            >
               剩余 {{ state.mountains[mountainId].tokenPile.length }} 枚
             </div>
           </div>
@@ -107,7 +200,6 @@ function getMountainSteps(mountainId: MountainId) {
                     : 'bg-white/20'
                 ]"
               >
-                <!-- Goats at this position -->
                 <div
                   v-for="player in getGoatsAtPosition(mountainId, position)"
                   :key="player.id"
@@ -132,7 +224,7 @@ function getMountainSteps(mountainId: MountainId) {
             v-for="player in state.players"
             :key="player.id"
             :class="[
-              'flex items-center gap-2 px-3 py-2 rounded-lg',
+              'flex items-center gap-2 px-3 py-2 rounded-lg transition-all',
               player.id === currentPlayer?.id ? 'bg-gray-100 ring-2 ring-green-500' : ''
             ]"
           >
@@ -148,29 +240,34 @@ function getMountainSteps(mountainId: MountainId) {
               <div class="font-medium text-sm">{{ player.name }}</div>
               <div class="text-xs text-gray-500">
                 {{ gameStore.playerScores.find(s => s.player.id === player.id)?.score ?? 0 }} 分
+                <span v-if="player.bonusTokens.length > 0" class="text-green-600">
+                  (+{{ player.bonusTokens.reduce((a, b) => a + b, 0) }})
+                </span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Dice Area (placeholder) -->
-      <div class="bg-white rounded-xl shadow-lg p-4">
-        <div class="text-center">
-          <div class="text-gray-500 mb-4">骰子区域</div>
-          <div class="flex justify-center gap-3 mb-4">
-            <div
-              v-for="die in state.currentDice"
-              :key="die.id"
-              class="w-12 h-12 bg-white border-2 border-gray-300 rounded-lg flex items-center justify-center text-2xl font-bold shadow"
-            >
-              {{ die.value || '?' }}
-            </div>
-          </div>
-          <div class="text-sm text-gray-500">
-            当前阶段: {{ phase === 'rolling' ? '掷骰' : phase === 'grouping' ? '分组' : phase === 'moving' ? '移动' : phase }}
-          </div>
-        </div>
+      <!-- Dice Area -->
+      <DiceArea
+        :dice="state.currentDice"
+        :phase="phase"
+        :can-roll="turnState?.canRoll ?? false"
+        :can-group="turnState?.canGroup ?? false"
+        @roll="handleRoll"
+        @modify-ones="handleModifyOnes"
+        @confirm-groups="handleConfirmGroups"
+      />
+
+      <!-- Next Turn Button -->
+      <div v-if="phase === 'moving'" class="text-center">
+        <button
+          class="px-6 py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-lg"
+          @click="handleNextTurn"
+        >
+          结束回合 →
+        </button>
       </div>
     </main>
   </div>

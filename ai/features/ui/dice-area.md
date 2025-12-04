@@ -2,7 +2,7 @@
 id: ui.dice-area
 module: ui
 priority: 8
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
