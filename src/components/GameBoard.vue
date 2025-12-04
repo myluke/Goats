@@ -287,77 +287,84 @@ function handleNewGame() {
 
 <template>
   <div v-if="state" class="min-h-screen bg-gradient-to-b from-sky-100 to-green-100 flex flex-col">
-    <!-- Header -->
-    <header class="bg-white/80 backdrop-blur-sm shadow-sm py-3">
-      <div class="container mx-auto px-4 flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-            🐐 Mountain Goats
-          </h1>
-          <!-- Game Menu Button -->
-          <div class="relative">
-            <button
-              class="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              @click="toggleGameMenu"
-              title="游戏菜单"
-            >
-              ☰
-            </button>
-            <!-- Dropdown Menu -->
-            <div
-              v-if="showGameMenu"
-              class="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[140px]"
-            >
+    <!-- Header - Responsive -->
+    <header class="bg-white/80 backdrop-blur-sm shadow-sm py-2 sm:py-3">
+      <div class="container mx-auto px-2 sm:px-4">
+        <!-- Top row: Logo, current player, menu -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-1 sm:gap-2">
+            <h1 class="text-base sm:text-xl font-bold text-gray-800 flex items-center gap-1 sm:gap-2">
+              🐐 <span class="hidden xs:inline">Mountain Goats</span>
+            </h1>
+            <!-- Game Menu Button -->
+            <div class="relative">
               <button
-                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
-                @click="handleSaveAndQuit"
+                class="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 transition-colors flex items-center justify-center"
+                @click="toggleGameMenu"
+                title="游戏菜单"
               >
-                💾 保存退出
+                ☰
               </button>
-              <button
-                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
-                @click="handleClearSave"
+              <!-- Dropdown Menu -->
+              <div
+                v-if="showGameMenu"
+                class="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50 min-w-[140px]"
               >
-                🗑️ 删除存档
-              </button>
+                <button
+                  class="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+                  @click="handleSaveAndQuit"
+                >
+                  💾 保存退出
+                </button>
+                <button
+                  class="w-full px-4 py-3 text-left text-sm hover:bg-gray-100 text-red-600 flex items-center gap-2"
+                  @click="handleClearSave"
+                >
+                  🗑️ 删除存档
+                </button>
+              </div>
             </div>
+            <!-- Rules Button -->
+            <button
+              class="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-gray-100 transition-colors text-lg flex items-center justify-center"
+              title="游戏规则"
+              @click="showRulesModal = true"
+            >
+              ❓
+            </button>
           </div>
-          <!-- Rules Button -->
-          <button
-            class="p-2 rounded-lg hover:bg-gray-100 transition-colors text-lg"
-            title="游戏规则"
-            @click="showRulesModal = true"
-          >
-            ❓
-          </button>
-        </div>
-        <div class="flex items-center gap-4">
-          <!-- Skip Animations Toggle -->
-          <button
-            class="text-xs px-2 py-1 rounded transition-colors"
-            :class="skipAnimations ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-700'"
-            :title="skipAnimations ? '动画已跳过' : '动画已启用'"
-            @click="toggleSkipAnimations"
-          >
-            {{ skipAnimations ? '⏩ 跳过动画' : '✨ 动画启用' }}
-          </button>
-          <div v-if="state.lastRoundStarted" class="text-sm text-red-600 font-medium">
-            最后一轮!
-          </div>
-          <div class="text-sm text-gray-600">
-            回合 {{ state.turnCount + 1 }}
-          </div>
+
+          <!-- Current Player (always visible, prominent on mobile) -->
           <div
             v-if="currentPlayer && !isGameOver"
-            class="flex items-center gap-2"
+            class="flex items-center gap-2 px-2 py-1 bg-green-50 rounded-lg border border-green-200"
           >
             <div
               :class="[
-                'w-6 h-6 rounded-full',
+                'w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2',
                 playerColorClasses[currentPlayer.color]
               ]"
             />
-            <span class="font-medium">{{ currentPlayer.name }} 的回合</span>
+            <span class="font-medium text-sm sm:text-base text-green-800">{{ currentPlayer.name }}</span>
+          </div>
+
+          <div class="flex items-center gap-2 sm:gap-4">
+            <!-- Skip Animations Toggle - hidden on very small screens -->
+            <button
+              class="hidden sm:flex text-xs px-2 py-1 rounded transition-colors items-center"
+              :class="skipAnimations ? 'bg-gray-200 text-gray-600' : 'bg-blue-100 text-blue-700'"
+              :title="skipAnimations ? '动画已跳过' : '动画已启用'"
+              @click="toggleSkipAnimations"
+            >
+              {{ skipAnimations ? '⏩' : '✨' }}
+              <span class="hidden md:inline ml-1">{{ skipAnimations ? '跳过动画' : '动画启用' }}</span>
+            </button>
+            <div v-if="state.lastRoundStarted" class="text-xs sm:text-sm text-red-600 font-bold bg-red-50 px-2 py-1 rounded">
+              最后一轮!
+            </div>
+            <div class="text-xs sm:text-sm text-gray-600 hidden sm:block">
+              第{{ state.turnCount + 1 }}回合
+            </div>
           </div>
         </div>
       </div>
@@ -410,10 +417,10 @@ function handleNewGame() {
     </div>
 
     <!-- Game Area -->
-    <main v-else class="flex-1 container mx-auto px-4 py-4 flex flex-col gap-4">
+    <main v-else class="flex-1 container mx-auto px-2 sm:px-4 py-2 sm:py-4 flex flex-col gap-2 sm:gap-4 overflow-hidden">
       <!-- Turn Result Notification -->
-      <div v-if="lastTurnResult && lastTurnResult.moves.length > 0" class="bg-blue-50 rounded-lg p-3 text-center">
-        <div class="text-sm text-blue-800">
+      <div v-if="lastTurnResult && lastTurnResult.moves.length > 0" class="bg-blue-50 rounded-lg p-2 sm:p-3 text-center mx-1">
+        <div class="text-xs sm:text-sm text-blue-800">
           <span v-for="(move, index) in lastTurnResult.moves" :key="index">
             {{ index > 0 ? ', ' : '' }}
             {{ move.mountainId }}号山
@@ -421,24 +428,24 @@ function handleNewGame() {
             <span v-if="move.knockedOff" class="text-red-600"> 挤下了{{ move.knockedOff }}</span>
           </span>
         </div>
-        <div v-if="lastTurnResult.bonusAwarded" class="text-green-600 font-bold mt-1">
+        <div v-if="lastTurnResult.bonusAwarded" class="text-green-600 font-bold mt-1 text-sm">
           获得奖励筹码: +{{ lastTurnResult.bonusAwarded }} 分!
         </div>
       </div>
 
-      <!-- Mountains -->
-      <div class="flex-1 flex items-end justify-center gap-2 overflow-x-auto pb-4">
+      <!-- Mountains - Horizontally scrollable on mobile with snap -->
+      <div class="flex-1 flex items-end justify-start sm:justify-center gap-1 sm:gap-2 overflow-x-auto pb-2 sm:pb-4 snap-x snap-mandatory scroll-smooth px-2">
         <div
           v-for="mountainId in MOUNTAIN_IDS"
           :key="mountainId"
-          class="flex flex-col items-center"
+          class="flex flex-col items-center flex-shrink-0 snap-center"
         >
           <!-- Mountain Number & Token Count -->
-          <div class="text-center mb-2 relative">
-            <div class="text-2xl font-bold text-gray-800">{{ mountainId }}</div>
+          <div class="text-center mb-1 sm:mb-2 relative">
+            <div class="text-lg sm:text-2xl font-bold text-gray-800">{{ mountainId }}</div>
             <div
               :class="[
-                'text-xs',
+                'text-[10px] sm:text-xs',
                 state.mountains[mountainId].tokenPile.length === 0 ? 'text-red-500 font-bold' : 'text-gray-500'
               ]"
             >
@@ -447,7 +454,7 @@ function handleNewGame() {
             <!-- +1 indicator when this mountain will receive movement -->
             <div
               v-if="isTargetMountain(mountainId) && phase === 'grouping'"
-              class="absolute -top-1 -right-1 bg-green-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full animate-bounce"
+              class="absolute -top-1 -right-1 bg-green-500 text-white text-[10px] sm:text-xs font-bold px-1 sm:px-1.5 py-0.5 rounded-full animate-bounce"
             >
               +1
             </div>
@@ -456,19 +463,19 @@ function handleNewGame() {
           <!-- Mountain Path -->
           <div
             :class="[
-              'rounded-t-3xl bg-gradient-to-t p-2 w-20 transition-all',
+              'rounded-t-3xl bg-gradient-to-t p-1 sm:p-2 w-14 sm:w-20 transition-all',
               mountainColors[mountainId],
-              isTargetMountain(mountainId) && phase === 'grouping' ? 'ring-4 ring-green-400 ring-offset-2' : ''
+              isTargetMountain(mountainId) && phase === 'grouping' ? 'ring-2 sm:ring-4 ring-green-400 ring-offset-1 sm:ring-offset-2' : ''
             ]"
           >
-            <div class="flex flex-col gap-1">
+            <div class="flex flex-col gap-0.5 sm:gap-1">
               <div
                 v-for="position in getMountainSteps(mountainId)"
                 :key="position"
                 :class="[
-                  'h-8 rounded flex items-center justify-center gap-1',
+                  'h-6 sm:h-8 rounded flex items-center justify-center gap-0.5 sm:gap-1',
                   position === MOUNTAIN_PATH_LENGTHS[mountainId]
-                    ? 'bg-yellow-300/50 border-2 border-yellow-400'
+                    ? 'bg-yellow-300/50 border sm:border-2 border-yellow-400'
                     : 'bg-white/20'
                 ]"
               >
@@ -476,7 +483,7 @@ function handleNewGame() {
                   v-for="player in getGoatsAtPosition(mountainId, position)"
                   :key="player.id"
                   :class="[
-                    'w-5 h-5 rounded-full border-2 text-xs flex items-center justify-center text-white font-bold transition-all',
+                    'w-4 h-4 sm:w-5 sm:h-5 rounded-full border sm:border-2 text-[8px] sm:text-xs flex items-center justify-center text-white font-bold transition-all',
                     playerColorClasses[player.color],
                     getGoatAnimationClass(player, mountainId)
                   ]"
@@ -490,28 +497,28 @@ function handleNewGame() {
         </div>
       </div>
 
-      <!-- Player Panel -->
-      <div class="bg-white/80 rounded-lg p-3">
-        <div class="flex gap-4 justify-center flex-wrap">
+      <!-- Player Panel - Compact on mobile -->
+      <div class="bg-white/80 rounded-lg p-2 sm:p-3">
+        <div class="flex gap-2 sm:gap-4 justify-center flex-wrap">
           <div
             v-for="player in state.players"
             :key="player.id"
             :class="[
-              'flex items-center gap-2 px-3 py-2 rounded-lg transition-all',
+              'flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-all min-w-0',
               player.id === currentPlayer?.id ? 'bg-gray-100 ring-2 ring-green-500' : ''
             ]"
           >
             <div
               :class="[
-                'w-8 h-8 rounded-full flex items-center justify-center text-white font-bold border-2',
+                'w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center text-white font-bold border sm:border-2 flex-shrink-0 text-xs sm:text-sm',
                 playerColorClasses[player.color]
               ]"
             >
               {{ player.name.charAt(0) }}
             </div>
-            <div class="relative">
-              <div class="font-medium text-sm">{{ player.name }}</div>
-              <div class="text-xs text-gray-500">
+            <div class="relative min-w-0">
+              <div class="font-medium text-xs sm:text-sm truncate">{{ player.name }}</div>
+              <div class="text-[10px] sm:text-xs text-gray-500">
                 {{ gameStore.playerScores.find(s => s.player.id === player.id)?.score ?? 0 }} 分
                 <span v-if="player.bonusTokens.length > 0" class="text-green-600">
                   (+{{ player.bonusTokens.reduce((a, b) => a + b, 0) }})
@@ -520,7 +527,7 @@ function handleNewGame() {
               <!-- Score increment animation -->
               <div
                 v-if="scoreAnimations.get(player.id)?.show"
-                class="absolute -top-4 right-0 text-green-500 font-bold text-sm animate-score-float"
+                class="absolute -top-3 sm:-top-4 right-0 text-green-500 font-bold text-xs sm:text-sm animate-score-float"
               >
                 +{{ scoreAnimations.get(player.id)?.delta }}
               </div>
