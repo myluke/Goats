@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { Die, MountainId } from '@/types/game'
 import {
   calculateGroupSum,
   isValidMountainSum,
   findModifiableOnes,
 } from '@/lib/rules'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   dice: Die[]
@@ -269,11 +272,11 @@ const groupColors = [
   <div class="bg-white rounded-xl shadow-lg p-4">
     <!-- Phase Indicator -->
     <div class="text-center text-sm text-gray-500 mb-3 flex items-center justify-center gap-2">
-      <span>{{ phase === 'rolling' ? '点击掷骰开始回合' : phase === 'grouping' ? '选择骰子组成小组' : '移动山羊中...' }}</span>
+      <span>{{ phase === 'rolling' ? t('dice.phaseRolling') : phase === 'grouping' ? t('dice.phaseGrouping') : t('dice.phaseMoving') }}</span>
       <!-- Mute Button -->
       <button
         class="text-gray-400 hover:text-gray-600 transition-colors"
-        :title="isMuted ? '开启声音' : '静音'"
+        :title="isMuted ? t('dice.soundOn') : t('dice.soundOff')"
         @click="toggleMute"
       >
         {{ isMuted ? '🔇' : '🔊' }}
@@ -286,10 +289,10 @@ const groupColors = [
         <span class="text-xl">💡</span>
         <div>
           <div class="text-sm font-medium text-yellow-800">
-            您掷出了 {{ modifiableOneIndices.length + 1 }} 个 1!
+            {{ t('dice.multipleOnesTitle', { count: modifiableOneIndices.length + 1 }) }}
           </div>
           <div class="text-xs text-yellow-700 mt-1">
-            规则: 一个 1 必须保留，其余的 1 可以改为其他数字 (1-6)。点击高亮的骰子来修改。
+            {{ t('dice.multipleOnesRule') }}
           </div>
         </div>
       </div>
@@ -305,7 +308,7 @@ const groupColors = [
           <div
             v-if="isLockedOne(index)"
             class="absolute -top-2 -right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs z-10"
-            title="这个1必须保留"
+            :title="t('dice.lockedOneTooltip')"
           >
             🔒
           </div>
@@ -314,7 +317,7 @@ const groupColors = [
           <div
             v-if="isModifiableOne(index)"
             class="absolute -top-2 -right-2 w-5 h-5 bg-yellow-500 rounded-full flex items-center justify-center text-white text-xs z-10 animate-pulse cursor-pointer"
-            title="点击修改这个1"
+            :title="t('dice.modifiableOneTooltip')"
           >
             ✏️
           </div>
@@ -355,14 +358,14 @@ const groupColors = [
 
       <!-- Modification summary -->
       <div v-if="oneModifications.size > 0" class="text-center text-sm text-green-700 mb-3">
-        已修改 {{ oneModifications.size }} 个骰子
+        {{ t('dice.modifiedDice', { count: oneModifications.size }) }}
       </div>
 
       <button
         class="w-full py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-medium shadow-sm"
         @click="handleConfirmOnes"
       >
-        {{ oneModifications.size > 0 ? '确认修改' : '不修改，继续' }}
+        {{ oneModifications.size > 0 ? t('dice.confirmModify') : t('dice.skipModify') }}
       </button>
     </div>
 
@@ -377,7 +380,7 @@ const groupColors = [
         <div
           v-if="die.isModified"
           class="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center z-10"
-          title="此骰子已被修改"
+          :title="t('dice.diceModified')"
         >
           <span class="text-white text-xs">✓</span>
         </div>
@@ -403,7 +406,7 @@ const groupColors = [
     <!-- Groups Display with Mountain Targets -->
     <div v-if="phase === 'grouping' && !showOneModifier" class="mb-4">
       <div class="text-sm text-gray-600 mb-2">
-        {{ groups.length > 0 ? '已创建的分组:' : '点击骰子选中后创建分组 (和为5-10可移动山羊)' }}
+        {{ groups.length > 0 ? t('dice.createdGroups') : t('dice.groupHint') }}
       </div>
 
       <!-- Group slots visualization -->
@@ -447,11 +450,11 @@ const groupColors = [
             </div>
             <div v-if="group.mountainId" class="text-xs text-green-600 font-medium mt-1 flex items-center justify-center gap-1">
               <span>🏔️</span>
-              <span>{{ group.mountainId }}号山</span>
+              <span>{{ t('common.mountain') }} {{ group.mountainId }}</span>
               <span class="bg-green-500 text-white px-1 rounded text-xs">+1</span>
             </div>
             <div v-else class="text-xs text-gray-400 mt-1">
-              无效目标
+              {{ t('dice.invalidTarget') }}
             </div>
           </div>
 
@@ -459,7 +462,7 @@ const groupColors = [
           <button
             class="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors"
             @click="handleRemoveGroup(gIndex)"
-            title="删除分组"
+            :title="t('dice.removeGroup')"
           >
             ✕
           </button>
@@ -471,21 +474,21 @@ const groupColors = [
           class="p-3 rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 min-w-[100px] flex items-center justify-center"
         >
           <div class="text-center text-blue-500 text-sm">
-            <div>选中 {{ selectedDice.size }} 个</div>
-            <div class="text-xs">点击"创建分组"</div>
+            <div>{{ t('dice.selectedCount', { count: selectedDice.size }) }}</div>
+            <div class="text-xs">{{ t('dice.clickCreateGroup') }}</div>
           </div>
         </div>
       </div>
 
       <!-- Summary of target mountains -->
       <div v-if="targetMountainIds.length > 0" class="mt-3 text-center">
-        <span class="text-sm text-gray-600">将移动: </span>
+        <span class="text-sm text-gray-600">{{ t('dice.willMove') }} </span>
         <span
           v-for="(mountainId, index) in targetMountainIds"
           :key="mountainId"
           class="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-sm mx-1"
         >
-          🏔️ {{ mountainId }}号山
+          🏔️ {{ t('common.mountain') }} {{ mountainId }}
           <span v-if="index < targetMountainIds.length - 1">, </span>
         </span>
       </div>
@@ -504,7 +507,7 @@ const groupColors = [
         ]"
         @click="handleRoll"
       >
-        {{ isRolling ? '🎲 掷骰中...' : '🎲 掷骰子' }}
+        {{ isRolling ? '🎲 ' + t('dice.rolling') : '🎲 ' + t('dice.rollDice') }}
       </button>
 
       <template v-if="phase === 'grouping' && !showOneModifier">
@@ -518,7 +521,7 @@ const groupColors = [
           ]"
           @click="handleCreateGroup"
         >
-          创建分组
+          {{ t('dice.createGroup') }}
         </button>
 
         <button
@@ -526,7 +529,7 @@ const groupColors = [
           class="px-4 py-2 rounded-lg font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-all"
           @click="handleReset"
         >
-          重置
+          {{ t('dice.reset') }}
         </button>
 
         <button
@@ -539,14 +542,14 @@ const groupColors = [
           ]"
           @click="handleConfirm"
         >
-          确认移动
+          {{ t('dice.confirmMove') }}
         </button>
       </template>
     </div>
 
     <!-- Help Text -->
     <div v-if="phase === 'grouping' && !showOneModifier" class="mt-3 text-xs text-gray-500 text-center">
-      点击骰子选中，然后点击"创建分组"。只有和为5-10的分组才会移动山羊。
+      {{ t('dice.helpText') }}
     </div>
   </div>
 </template>

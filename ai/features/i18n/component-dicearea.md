@@ -2,7 +2,7 @@
 id: i18n.component-dicearea
 module: i18n
 priority: 26
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
