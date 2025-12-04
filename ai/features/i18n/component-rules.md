@@ -2,7 +2,7 @@
 id: i18n.component-rules
 module: i18n
 priority: 27
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
