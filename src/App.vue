@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useGameStore, type PlayerSetup } from '@/stores/game'
 import SetupScreen from '@/components/SetupScreen.vue'
 import GameBoard from '@/components/GameBoard.vue'
 
+const { t, locale } = useI18n()
 const gameStore = useGameStore()
 
 const isPlaying = computed(() => gameStore.state !== null)
@@ -41,7 +43,8 @@ function handleNewGame() {
 function formatSavedDate(isoString: string): string {
   try {
     const date = new Date(isoString)
-    return date.toLocaleString('zh-CN', {
+    const localeCode = locale.value === 'zh' ? 'zh-CN' : 'en-US'
+    return date.toLocaleString(localeCode, {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
@@ -62,10 +65,10 @@ function formatSavedDate(isoString: string): string {
     <div class="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full">
       <div class="text-center mb-6">
         <div class="text-4xl mb-3">🐐</div>
-        <h2 class="text-xl font-bold text-gray-800 mb-2">发现未完成的游戏</h2>
+        <h2 class="text-xl font-bold text-gray-800 mb-2">{{ t('app.foundUnfinishedGame') }}</h2>
         <div class="text-sm text-gray-500">
-          <div>{{ savedGameInfo.playerCount }} 位玩家 · 第 {{ savedGameInfo.turnCount + 1 }} 回合</div>
-          <div>保存于 {{ formatSavedDate(savedGameInfo.savedAt) }}</div>
+          <div>{{ t('app.playersAndTurn', { count: savedGameInfo.playerCount, turn: savedGameInfo.turnCount + 1 }) }}</div>
+          <div>{{ t('app.savedAt', { time: formatSavedDate(savedGameInfo.savedAt) }) }}</div>
         </div>
       </div>
 
@@ -74,13 +77,13 @@ function formatSavedDate(isoString: string): string {
           class="w-full py-3 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors"
           @click="handleContinueGame"
         >
-          继续游戏
+          {{ t('app.continueGame') }}
         </button>
         <button
           class="w-full py-3 bg-gray-200 text-gray-700 rounded-lg font-medium hover:bg-gray-300 transition-colors"
           @click="handleNewGame"
         >
-          开始新游戏
+          {{ t('app.startNewGame') }}
         </button>
       </div>
     </div>

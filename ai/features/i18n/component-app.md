@@ -2,7 +2,7 @@
 id: i18n.component-app
 module: i18n
 priority: 29
-status: failing
+status: passing
 version: 1
 origin: manual
 dependsOn:
