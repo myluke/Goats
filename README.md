@@ -50,15 +50,21 @@ npm run preview
 docker build -t mountain-goats .
 
 # 运行容器
-docker run -d -p 3000:3000 --name goats mountain-goats
+docker run -d -p 4000:3000 --name goats mountain-goats
 
 # 访问
-http://localhost:3000
+http://localhost:4000
 
 # 其他命令
 docker logs goats      # 查看日志
 docker stop goats      # 停止容器
+docker restart goats   # 重启容器
 docker rm goats        # 删除容器
+
+# 强制更新（重新构建镜像并启动）
+docker stop goats && docker rm goats
+docker build --no-cache -t mountain-goats .
+docker run -d -p 4000:3000 --name goats mountain-goats
 ```
 
 ## 项目结构
