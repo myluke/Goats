@@ -31,6 +31,9 @@ const knockoffAnimations = ref<Map<string, { mountainId: MountainId; fromPos: nu
 const tokenAnimations = ref<{ mountainId: MountainId; value: number; playerId: string }[]>([])
 const scoreAnimations = ref<Map<string, { delta: number; show: boolean }>>(new Map())
 
+// Guard to prevent multiple nextTurn() calls
+const turnAdvanceScheduled = ref(false)
+
 // Toggle skip animations
 function toggleSkipAnimations() {
   skipAnimations.value = !skipAnimations.value
@@ -196,10 +199,13 @@ watch(lastTurnResult, async (newResult) => {
 watch(
   [phase, isAnimating],
   ([newPhase, animating]) => {
-    if (newPhase === 'moving' && !animating) {
+    if (newPhase === 'moving' && !animating && !turnAdvanceScheduled.value) {
+      // Guard to prevent multiple nextTurn() calls from race condition
+      turnAdvanceScheduled.value = true
       // Brief delay for visual feedback, then advance
       setTimeout(() => {
         gameStore.nextTurn()
+        turnAdvanceScheduled.value = false
       }, 800)
     }
   }
