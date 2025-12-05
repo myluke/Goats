@@ -41,7 +41,25 @@ npm run build
 npm run preview
 ```
 
-开发服务器默认运行在 http://localhost:5173
+开发服务器运行在 http://localhost:3000
+
+## Docker 部署
+
+```bash
+# 构建镜像
+docker build -t mountain-goats .
+
+# 运行容器
+docker run -d -p 3000:3000 --name goats mountain-goats
+
+# 访问
+http://localhost:3000
+
+# 其他命令
+docker logs goats      # 查看日志
+docker stop goats      # 停止容器
+docker rm goats        # 删除容器
+```
 
 ## 项目结构
 
