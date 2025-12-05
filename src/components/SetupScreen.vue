@@ -26,6 +26,13 @@ onMounted(() => {
     // Auto-show tutorial for first-time visitors
     showTutorial.value = true
   }
+
+  // Set default player names
+  players.value.forEach((player, index) => {
+    if (!player.name) {
+      player.name = t('setup.playerPlaceholder', { index: index + 1 })
+    }
+  })
 })
 
 function handleTutorialComplete() {
