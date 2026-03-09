@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "wrangler pages deploy dist",
+    "deploy:preview": "wrangler pages deploy dist --branch preview"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
